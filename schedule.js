@@ -16,6 +16,7 @@ jQuery(document).ready(function() {
     var kb = tabulator.kb;
     var fetcher = tabulator.sf;
     var dom = document;
+    var updater = new $rdf.sparqlUpdate(kb);
 
     var ICAL = $rdf.Namespace('http://www.w3.org/2002/12/cal/ical#');
     var SCHED = $rdf.Namespace('http://www.w3.org/ns/pim/schedule#');
