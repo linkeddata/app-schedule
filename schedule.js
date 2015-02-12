@@ -10,6 +10,8 @@ var OriginalSource = document.children ? document.children[0].outerHTML : // Chr
 jQuery(document).ready(function() {
 
 
+    var appPathSegment = 'app-when-can-we.w3.org'; // how to allocate this string and connect to 
+    
     
     //////////////////////////////////////////////
 
@@ -29,6 +31,7 @@ jQuery(document).ready(function() {
     var base = window.document.title = uri.slice(0, uri.lastIndexOf('/')+1);
     var subject_uri = base  + 'details.ttl#event1';
     var forms_uri = window.document.title = base+ 'forms.ttl';
+
 
     var subject = kb.sym(subject_uri);
     var thisInstance = subject;
@@ -85,7 +88,7 @@ jQuery(document).ready(function() {
             if (success) {
                 webOperation('PUT', there, { data: xhr.responseText, contentType: content_type}, callback);
             } else {
-                callback(uri, success, body, xhr);
+                callback(uri, success, "(on read) " + body, xhr);
             }
         });
     };
@@ -129,19 +132,19 @@ jQuery(document).ready(function() {
     /////////////////////////  Create new document files for new instance of app
 
     var initializeNewInstanceInWorkspace = function(ws) {
-        var newBase = kb.any(ws, sp('uriPrefix')).value;
+        var newBase = kb.any(ws, ns.space('uriPrefix')).value;
         if (newBase.slice(-1) !== '/') {
             $rdf.log.error(appPathSegment + ": No / at end of uriPrefix " + newBase ); // @@ paramater?
             newBase = newBase + '/';
         }
+        var now = new Date();
         newBase += appPathSegment + '/id'+ now.getTime() + '/'; // unique id 
         
         initializeNewInstanceAtBase(thisInstance, newBase);
     }
 
-    var initializeNewInstanceAtBase = function(newBase) {
+    var initializeNewInstanceAtBase = function(thisInstance, newBase) {
 
-        var appPathSegment = 'app-when-can-we.w3.org'; // how to allocate this string and connect to 
         var here = $rdf.sym(thisInstance.uri.split('#')[0]);
 
         var sp = tabulator.ns.space;
@@ -224,11 +227,11 @@ jQuery(document).ready(function() {
             var item = toBeCopied[f];
             var fun = function copyItem(item) {
                 agenda.push(function(){
-                    console.log("Copying " + base + item.local);
+                    console.log("Copying " + base + item.local + " to " +  newBase + item.local);
                     webCopy(base + item.local, newBase + item.local, item.contentType, function(uri, ok, message, xhr) {
                         if (!ok) {
-                            complainIfBad(ok, "FAILED to read "+ base + item.local +' : ' + message);
-                            console.log("FAILED to read "+ base + item.local +' : ' + message);
+                            complainIfBad(ok, "FAILED to copy "+ base + item.local +' : ' + message);
+                            console.log("FAILED to copy "+ base + item.local +' : ' + message);
                         } else {
                             agenda.shift()(); // beware too much nesting
                         }
