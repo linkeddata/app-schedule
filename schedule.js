@@ -4,7 +4,7 @@
     }
 });
 */
-var OriginalSource = document.children ? [0].outerHTML : // Chrome
+var OriginalSource = document.children ? document.children[0].outerHTML : // Chrome
             document.childNodes[1].outerHTML; // Safari
             
 jQuery(document).ready(function() {
@@ -15,6 +15,7 @@ jQuery(document).ready(function() {
 
     var kb = tabulator.kb;
     var fetcher = tabulator.sf;
+    var ns = tabulator.ns;
     var dom = document;
     var updater = new $rdf.sparqlUpdate(kb);
 
@@ -30,6 +31,7 @@ jQuery(document).ready(function() {
     var forms_uri = window.document.title = base+ 'forms.ttl';
 
     var subject = kb.sym(subject_uri);
+    var thisInstance = subject;
     var detailsDoc = kb.sym(subject_uri.split('#')[0]);
          
     var resultsDoc = $rdf.sym(base + 'results.ttl');
@@ -46,6 +48,8 @@ jQuery(document).ready(function() {
     
     var div = document.getElementById('FormTarget');
     
+    // Utility functions
+    
     var say = function(message) {
     };
     
@@ -55,7 +59,44 @@ jQuery(document).ready(function() {
         }
     };
     
+    var clearElement = function(ele) {
+        while (ele.firstChild) {
+            ele.removeChild(ele.firstChild);
+        }
+    }
+    
+    var webOperation = function(method, uri, options, callback) {
+        var xhr = $rdf.Util.XMLHTTPFactory();
+        xhr.onreadystatechange = function (){
+            if (xhr.readyState == 4){
+                var success = (!xhr.status || (xhr.status >= 200 && xhr.status < 300));
+                callback(uri, success, xhr.responseText, xhr);
+            }
+        };
+        xhr.open(method, uri, true);
+        if (options.contentType) {
+            xhr.setRequestHeader('Content-type', options.contentType);
+        }
+        xhr.send(options.data ? options.data : undefined);
+    };
+    
+    var webCopy = function(here, there, content_type, callback) {
+        webOperation('GET', here,  {}, function(uri, success, body, xhr) {
+            if (success) {
+                webOperation('PUT', there, { data: xhr.responseText, contentType: content_type}, callback);
+            } else {
+                callback(uri, success, body, xhr);
+            }
+        });
+    };
+    
+          
 
+    ////////////////////////////////////// Getting logged in with a WebId
+    
+    var me_uri = tabulator.preferences.get('me');
+    var me = me_uri? kb.sym(me_uri) : null;
+        
     var loginOutButton = tabulator.panes.utils.loginStatusBox(dom, function(webid){
         // sayt.parent.removeChild(sayt);
         if (webid) {
@@ -70,6 +111,148 @@ jQuery(document).ready(function() {
     });
     loginOutButton.setAttribute('style', 'float: right'); // float the beginning of the end
     div.appendChild(loginOutButton);
+
+
+    ////////////////////////////////  Reproduction: spawn a new instance
+    //
+    // Viral growth path: user of app decides to make another instance
+    //
+
+    var newInstanceButton = function() {
+        return tabulator.panes.utils.newAppInstance(dom, "Schedule another event",
+                    initializeNewInstanceInWorkspace);
+    }; // newInstanceButton
+
+
+
+
+    /////////////////////////  Create new document files for new instance of app
+
+    var initializeNewInstanceInWorkspace = function(ws) {
+        var newBase = kb.any(ws, sp('uriPrefix')).value;
+        if (newBase.slice(-1) !== '/') {
+            $rdf.log.error(appPathSegment + ": No / at end of uriPrefix " + newBase ); // @@ paramater?
+            newBase = newBase + '/';
+        }
+        newBase += appPathSegment + '/id'+ now.getTime() + '/'; // unique id 
+        
+        initializeNewInstanceAtBase(thisInstance, newBase);
+    }
+
+    var initializeNewInstanceAtBase = function(newBase) {
+
+        var appPathSegment = 'app-when-can-we.w3.org'; // how to allocate this string and connect to 
+        var here = $rdf.sym(thisInstance.uri.split('#')[0]);
+
+        var sp = tabulator.ns.space;
+        var kb = tabulator.kb;
+        
+        
+        newDetailsDoc = kb.sym(newBase + 'details.ttl');
+        newResultsDoc = kb.sym(newBase + 'results.ttl');
+        newIndexDoc = kb.sym(newBase + 'index.html');
+        /*
+        newScriptDoc = kb.sym(newBase + 'schedule.js');
+        newFormsDoc = kb.sym(newBase + 'forms.ttl');
+        */
+        toBeCopied = [
+            { local: 'index.html', contentType: 'text/html'} ,
+            { local: 'schedule.js', contentType: 'application/javascript'} ,
+            { local: 'forms.ttl', contentType: 'text/turtle'} ,
+        ];
+        
+        newInstance = kb.sym(newDetailsDoc.uri + '#event');
+        kb.add(newInstance, ns.rdf('type'), SCHED('SchedulableEvent'), newDetailsDoc);
+        if (me) {
+            kb.add(newInstance, DC('author'), me, newDetailsDoc);
+        }
+        
+        kb.add(newInstance, DC('created'), new Date(), newDetailsDoc);
+        kb.add(newInstance, SCHED('resultsDocument'), newDetailsDoc);
+        
+        // Keep a paper trail   @@ Revisit when we have non-public ones @@ Privacy
+        kb.add(newInstance, tabulator.ns.space('inspiration'), thisInstance, detailsDoc);            
+        kb.add(newInstance, tabulator.ns.space('inspiration'), thisInstance, newDetailsDoc);
+        
+        // $rdf.log.debug("\n Ready to put " + kb.statementsMatching(undefined, undefined, undefined, there)); //@@
+
+
+        agenda = [];
+        agenda.push(function createDetailsFile(){
+            updater.put(
+                newDetailsDoc,
+                kb.statementsMatching(undefined, undefined, undefined, newDetailsDoc),
+                'text/turtle',
+                function(uri2, ok, message) {
+                    if (ok) {
+                        agenda.shift()();
+                    } else {
+                        complainIfBad(ok, "FAILED to save new scheduler at: "+ there.uri +' : ' + message);
+                        console.log("FAILED to save new scheduler at: "+ there.uri +' : ' + message);
+                    };
+                }
+            );
+        });
+
+/*
+        agenda.push(function createResultsFile(){
+            updater.put(newResultsDoc, [], 'text/turtle', function(uri2, ok, message) {
+                    if (ok) {
+                        agenda.shift()();
+                    } else {
+                        complainIfBad(ok, "FAILED to create results store at: "+ there.uri +' : ' + message);
+                        console.log("FAILED to create results store at: "+ there.uri +' : ' + message);
+                    };
+                }
+            );
+        });
+
+        agenda.push(function createHTMLFile(){
+            updater.put(newIndexDoc, OriginalSource, 'text/html', function(uri2, ok, message) {
+                    if (ok) {
+                        agenda.shift()();
+                    } else {
+                        complainIfBad(ok, "FAILED to create HTML file at: "+ there.uri +' : ' + message);
+                        console.log("FAILED to create HTML file at: "+ there.uri +' : ' + message);
+                    };
+                }
+            );
+        });
+*/        
+        var f, fi, fn;
+        for (f=0; f < toBeCopied.length; f++) {
+            var item = toBeCopied[f];
+            var fun = function copyItem(item) {
+                agenda.push(function(){
+                    console.log("Copying " + base + item.local);
+                    webCopy(base + item.local, newBase + item.local, item.contentType, function(uri, ok, message, xhr) {
+                        if (!ok) {
+                            complainIfBad(ok, "FAILED to read "+ base + item.local +' : ' + message);
+                            console.log("FAILED to read "+ base + item.local +' : ' + message);
+                        } else {
+                            agenda.shift()(); // beware too much nesting
+                        }
+                    });
+                });
+            };
+            fun(item);
+        };
+
+        agenda.push(function(){  // give the user links to the new app
+        
+            var p = div.appendChild(dom.createElement('p'));
+            p.innerHTML = 
+                "Your <a href='" + newIndexDoc.uri + "'><b>new scheduler</b></a> is ready to be set up. "+
+                "<br/><br/><a href='" + newIndexDoc.uri + "'>Say when you what days work for you.</a>";
+            });
+        
+        agenda.shift()();        
+        // Created new data files.
+    }
+
+
+
+    /////////////////////////
 
 
     var getForms = function (div) {
@@ -88,6 +271,11 @@ jQuery(document).ready(function() {
     
     var showAppropriateDisplay = function(div) {
         
+        if (kb.holds(subject, ns.rdf('type'), ns.wf('TemplateInstance'))) {
+            // This is read-only example e.g. on github pages, etc
+            showBootstrap(div);
+            return;
+        }
         var me_uri = tabulator.preferences.get('me');
         var me = me_uri? kb.sym(me_uri) : null;
         var author = kb.any(subject, DC('author'));
@@ -97,8 +285,34 @@ jQuery(document).ready(function() {
             getResults(div);
         }
     };
+    
+    var showBootstrap = function showBootstrap(div) {
+    
+        var na = div.appendChild(tabulator.panes.utils.newAppInstance(
+            dom, "Schedule an event", initializeNewInstanceInWorkspace));
+        
+        var hr = div.appendChild(dom.createElement('hr')); // @@
+        
+        var p = div.appendChild(dom.createElement('p'));
+        p.textContent = "Where would you like to store the data for the poll?  " +
+        "Give the URL of the directory where you would like the data stored.";
+        var baseField = div.appendChild(dom.createElement('input'));
+        baseField.setAttribute("type", "text");
+        baseField.size = 80; // really a string
+        baseField.label = "base URL";
+        baseField.autocomplete = "on";
+        
+        var label = div.appendChild(dom.createElement('label'));
+        label.textContent = "Do it";
+        var button = label.appendChild(dom.createElement('button'));
+        button.addEventListener('click', function(e){
+            var newBase = baseField.value;
+            initializeNewInstanceAtBase(newBase);
+        });
+    }
           
-
+    /////////////// The forms to configure the poll
+    
     var showForms = function(div) {
 
         var wizard = true;
@@ -177,12 +391,6 @@ jQuery(document).ready(function() {
     
     
  
-    var clearElement = function(ele) {
-        while (ele.firstChild) {
-            ele.removeChild(ele.firstChild);
-        }
-    }
-          
     // Read or create empty results file
     
     var getResults = function (div) {
@@ -386,112 +594,8 @@ jQuery(document).ready(function() {
     
     }; // showResults
     
-    ////////////////////////////////////////  Reproduction
-    
-
-
-    var newInstanceButton = function(thisInstance) {
-        return tabulator.panes.utils.newAppInstance(dom, "Schedule another event", function(ws){
-
-            var appPathSegment = 'app-when-can-we.w3.org'; // how to allocate this string and connect to 
-            var here = $rdf.sym(thisInstance.uri.split('#')[0]);
-
-            var sp = tabulator.ns.space;
-            var kb = tabulator.kb;
-            
-            var base = kb.any(ws, sp('uriPrefix')).value;
-            if (base.slice(-1) !== '/') {
-                $rdf.log.error(appPathSegment + ": No / at end of uriPrefix " + base ); // @@ paramater?
-                base = base + '/';
-            }
-            base += appPathSegment + '/id'+ now.getTime() + '/'; // unique id 
-            
-            newDetailsDoc = kb.sym(base + 'details.ttl');
-            newResultsDoc = kb.sym(base + 'results.ttl');
-            newIndexDoc = kb.sym(base + 'index.html');
-            
-            newInstance = kb.sym(newDetailsDoc + '#event');
-            kb.add(newInstance, RDFS('type'), SCHED('SchedulableEvent'), newDetailsDoc);
-            if (me) {
-                kb.add(newInstance, DC('author'), me, newDetailsDoc);
-            }
-            
-            kb.add(newInstance, DC('created'), new Date(), newDetailsDoc);
-            kb.add(newInstance, SCHED('resultsDocument'), newDetailsDoc);
-            
-            // Keep a paper trail   @@ Revisit when we have non-public ones @@ Privacy
-            kb.add(newInstance, tabulator.ns.space('inspiration'), thisInstance, detailsDoc);            
-            kb.add(newInstance, tabulator.ns.space('inspiration'), thisInstance, newDetailsDoc);
-            
-            // $rdf.log.debug("\n Ready to put " + kb.statementsMatching(undefined, undefined, undefined, there)); //@@
-
-
-            agenda = [];
-            agenda.push(function createDetailsFile(){
-                updater.put(
-                    newDetailsDoc,
-                    kb.statementsMatching(undefined, undefined, undefined, newDetailsDoc),
-                    'text/turtle',
-                    function(uri2, ok, message) {
-                        if (ok) {
-                            agenda.shift()();
-                        } else {
-                            complainIfBad(ok, "FAILED to save new scheduler at: "+ there.uri +' : ' + message);
-                            console.log("FAILED to save new scheduler at: "+ there.uri +' : ' + message);
-                        };
-                    }
-                );
-            });
-
-
-            agenda.push(function createResultsFile(){
-                updater.put(newResultsDoc, [], 'text/turtle', function(uri2, ok, message) {
-                        if (ok) {
-                            agenda.shift()();
-                        } else {
-                            complainIfBad(ok, "FAILED to create results store at: "+ there.uri +' : ' + message);
-                            console.log("FAILED to create results store at: "+ there.uri +' : ' + message);
-                        };
-                    }
-                );
-            });
-
-            agenda.push(function createHTMLFile(){
-                updater.put(newResultsDoc, OriginalSource, 'text/html', function(uri2, ok, message) {
-                        if (ok) {
-                            agenda.shift()();
-                        } else {
-                            complainIfBad(ok, "FAILED to create HTML file at: "+ there.uri +' : ' + message);
-                            console.log("FAILED to create HTML file at: "+ there.uri +' : ' + message);
-                        };
-                    }
-                );
-            });
-
-            agenda.push(function(){  // give the user links to the new app
-            
-            var p = div.appendChild(dom.createElement('p'));
-            p.innerHTML = 
-                "Your <a href='" + newIndexDoc.uri + "'>new scheduler</a> is ready. ";
-            });
-            
-            agenda.shift()();
-            
-            // Created new data files.
-            // @@ Now create initial files - html skin, (Copy of mashlib, css?)
-            // What about forms?  -- somewhere central like github
-            // @@ Now create form to edit configuation parameters
-            // @@ Optionally link new instance to list of instances -- both ways? and to child/parent?
-            // @@ Set up access control for new config and store. 
-            
-        }); // callback to newAppInstance
-
-        
-    }; // newInstanceButton
-
-
-    var structure = div.appendChild(dom.createElement('table'));
-    structure.setAttribute('style', 'background-color: white;');
+    var structure = div.appendChild(dom.createElement('table')); // @@ make responsive style
+    structure.setAttribute('style', 'background-color: white; min-width: 40em; min-height: 13em;');
     var naviTop = structure.appendChild(dom.createElement('tr'));
     var naviMain = naviTop.appendChild(dom.createElement('td'));
     naviMain.setAttribute('colspan', '3');
