@@ -66,6 +66,7 @@ jQuery(document).ready(function() {
         while (ele.firstChild) {
             ele.removeChild(ele.firstChild);
         }
+        return ele;
     }
     
     var webOperation = function(method, uri, options, callback) {
@@ -97,24 +98,23 @@ jQuery(document).ready(function() {
 
     ////////////////////////////////////// Getting logged in with a WebId
     
-    var me_uri = tabulator.preferences.get('me');
-    var me = me_uri? kb.sym(me_uri) : null;
-        
-    var loginOutButton = tabulator.panes.utils.loginStatusBox(dom, function(webid){
-        // sayt.parent.removeChild(sayt);
+    var setUser = function(webid) {
         if (webid) {
             tabulator.preferences.set('me', webid);
             console.log("(Logged in as "+ webid+")")
             me = kb.sym(webid);
+            // @@ Here enable all kinds of stuff
         } else {
             tabulator.preferences.set('me', '');
             console.log("(Logged out)")
             me = null;
-        }
-    });
-    loginOutButton.setAttribute('style', 'float: right'); // float the beginning of the end
-    div.appendChild(loginOutButton);
-
+        }    
+    }
+    
+    var me_uri = tabulator.preferences.get('me');
+    var me = me_uri? kb.sym(me_uri) : null;
+    tabulator.panes.utils.checkUser(detailsDoc, setUser);
+        
 
     ////////////////////////////////  Reproduction: spawn a new instance
     //
@@ -133,6 +133,9 @@ jQuery(document).ready(function() {
 
     var initializeNewInstanceInWorkspace = function(ws) {
         var newBase = kb.any(ws, ns.space('uriPrefix')).value;
+        if (!newBase) {
+            newBase = ws.uri.split('#')[0];
+        }
         if (newBase.slice(-1) !== '/') {
             $rdf.log.error(appPathSegment + ": No / at end of uriPrefix " + newBase ); // @@ paramater?
             newBase = newBase + '/';
@@ -258,21 +261,21 @@ jQuery(document).ready(function() {
     /////////////////////////
 
 
-    var getForms = function (div) {
+    var getForms = function () {
         fetcher.nowOrWhenFetched(forms_uri, undefined, function(ok, body){
             if (!ok) return complainIfBad(ok, body);
-            getDetails(div);
+            getDetails();
         });
     };
     
-    var getDetails = function(div) {
+    var getDetails = function() {
         fetcher.nowOrWhenFetched(detailsDoc.uri, undefined, function(ok, body){
             if (!ok) return complainIfBad(ok, body);
-            showAppropriateDisplay(div);
+            showAppropriateDisplay();
         });
     };
     
-    var showAppropriateDisplay = function(div) {
+    var showAppropriateDisplay = function() {
         
         if (kb.holds(subject, ns.rdf('type'), ns.wf('TemplateInstance'))) {
             // This is read-only example e.g. on github pages, etc
@@ -283,16 +286,16 @@ jQuery(document).ready(function() {
         var me = me_uri? kb.sym(me_uri) : null;
         var author = kb.any(subject, DC('author'));
         if (me && (!author || me.sameTerm(author))) { // Allow  editing of tuff  was: && author && me.sameTerm(author)
-            showForms(div);
+            showForms();
         } else { // no editing not author
-            getResults(div);
+            getResults();
         }
     };
     
-    var showBootstrap = function showBootstrap(div) {
-    
+    var showBootstrap = function showBootstrap() {
+        var div = naviMain;
         var na = div.appendChild(tabulator.panes.utils.newAppInstance(
-            dom, "Schedule an event", initializeNewInstanceInWorkspace));
+            dom, "Start a new poll in a workspace", initializeNewInstanceInWorkspace));
         
         var hr = div.appendChild(dom.createElement('hr')); // @@
         
@@ -304,72 +307,89 @@ jQuery(document).ready(function() {
         baseField.size = 80; // really a string
         baseField.label = "base URL";
         baseField.autocomplete = "on";
+
+        div.appendChild(dom.createElement('br')); // @@
         
-        var label = div.appendChild(dom.createElement('label'));
-        label.textContent = "Do it";
-        var button = label.appendChild(dom.createElement('button'));
+        var button = div.appendChild(dom.createElement('button'));
+        button.textContent = "Start new poll at this URI";
         button.addEventListener('click', function(e){
             var newBase = baseField.value;
+            if (newBase.slice(-1) !== '/') {
+                newBase += '/';
+            }
             initializeNewInstanceAtBase(newBase);
         });
     }
           
     /////////////// The forms to configure the poll
     
-    var showForms = function(div) {
+    var showForms = function() {
 
+        var div = naviMain;
         var wizard = true;
+        var currentSlide = 0;
+        var gotDoneButton = false;
         if (wizard) {
         
             forms = [ form1, form2, form3 ];
-            divs = [];
-            var d;
+            slides = [];
+            var slide, currentSlide = 0;
             for (var f=0; f<forms.length; f++) {
-                d = dom.createElement('div');
-                tabulator.panes.utils.appendForm(document, d, {}, subject, forms[f], detailsDoc, complainIfBad);
-                divs.push(d);
-                if (f>0) {
-                    var ff = function(d) {
-                        var prev =  divs[f-1];
-                        // prevs.next = d;
-                        // f.previous = prev;
-                        
-                        var b1 = dom.createElement('button');
-                        b1.textContent = "previous";
-                        b1.addEventListener('click', function(e) {
-                            div.removeChild(d);
-                            div.appendChild(prev);
-                        }, false);
-                        //clearElement(naviLeft);
-                        //naviLeft.appendChild(b1);
-                        d.appendChild(b1);
-
-                        var b2 = dom.createElement('button');
-                        b2.textContent = "next >";
-                        b2.style = 'float:right;';
-                        b2.addEventListener('click', function(e) {
-                            div.removeChild(prev);
-                            div.appendChild(d);
-                        }, false);
-
-                        clearElement(naviLeft);
-                        naviLeft.appendChild(b1);
-                        prev.appendChild(b2);
-                    };
-                    ff(d);
-                }
+                slide = dom.createElement('div');
+                tabulator.panes.utils.appendForm(document, slide, {}, subject, forms[f], detailsDoc, complainIfBad);
+                slides.push(slide);
             }
-            div.appendChild(divs[0]);
+
+            var refresh = function() {
+                clearElement(naviMain).appendChild(slides[currentSlide]);
+                
+                if (currentSlide === 0) {
+                    b1.disabled = true;
+                } else {
+                    delete b1.disabled;
+                }
+                if (currentSlide === slides.length - 1 ) {
+                    b2.disabled = true;
+                    if (!gotDoneButton) { // Only expose at last slide seen
+                        naviCenter.appendChild(doneButton); // could also check data shape
+                        gotDoneButton = true;
+                    }
+                } else {
+                    delete b2.disabled;
+                }
+                
+            }
+            var b1 = clearElement(naviLeft).appendChild(dom.createElement('button'));
+            b1.textContent = "<- go back";
+            b1.addEventListener('click', function(e) {
+                if (currentSlide > 0) {
+                    currentSlide -= 1;
+                    refresh();
+                } 
+            }, false);
+
+            
+            var b2 = clearElement(naviRight).appendChild(dom.createElement('button'));
+            b2.textContent = "continue ->";
+            b2.addEventListener('click', function(e) {
+                if (currentSlide < slides.length - 1) {
+                    currentSlide += 1;
+                    refresh();
+                } 
+            }, false);
+
+            refresh();
             
         } else { // not wizard one big form
             // @@@ create the initial config doc if not exist
             var table = div.appendChild(dom.createElement('table'));
-            div.appendChild(table);
             tabulator.panes.utils.appendForm(document, table, {}, subject, form1, detailsDoc, complainIfBad);
             //table.appendChild(dom.createElement('p')).textContent = "Pick some dates which would work for you.";
             tabulator.panes.utils.appendForm(document, table, {}, subject, form2, detailsDoc, complainIfBad);
             //table.appendChild(dom.createElement('p')).textContent = "Who will you invite to attend the event? Give their email addresses.";
             tabulator.panes.utils.appendForm(document, table, {}, subject, form3, detailsDoc, complainIfBad);
+             naviCenter.appendChild(doneButton); // could also check data shape
+           
         }
         // @@@  link config to results
         
@@ -377,33 +397,33 @@ jQuery(document).ready(function() {
         insertables.push($rdf.st(subject, SCHED('availabilityOptions'), SCHED('YesNoMaybe'), detailsDoc));
         insertables.push($rdf.st(subject, SCHED('ready'), new Date(), detailsDoc));
         
-        var b1 = dom.createElement('button');
-        b1.textContent = "Done";
-        b1.addEventListener('click', function(e) {
+        var doneButton = dom.createElement('button');
+        doneButton.textContent = "Done";
+        doneButton.addEventListener('click', function(e) {
             tabulator.sparql.update([], insertables, function(uri,success,error_body){
                 if (!success) {
                     complainIfBad(success, error_body);
                 } else {
-                    getResults(div);
+                    getResults();
                 }
             });
 
         }, false);
-        div.appendChild(b1);
     } // showForms
     
     
  
     // Read or create empty results file
     
-    var getResults = function (div) {
+    var getResults = function () {
+        var div = naviMain;
         fetcher.nowOrWhenFetched(resultsDoc.uri, undefined, function(ok, body){
             if (!ok) {   
                 if (true) { /// @@@@@@@ Check explictly for 404 error
                     updater.put(resultsDoc, [], 'text/turtle', function(uri2, ok, message) {
                         if (ok) {
-                            clearElement(div);
-                            showResults(div);
+                            clearElement(naviMain);
+                            showResults();
                         } else {
                             complainIfBad(ok, "FAILED to create results file at: "+ resultsDoc.uri +' : ' + message);
                             console.log("FAILED to craete results file at: "+ resultsDoc.uri +' : ' + message);
@@ -413,8 +433,8 @@ jQuery(document).ready(function() {
                     complainIfBad(ok, "FAILED to read results file: " + body)
                 }
             } else { // Happy read
-                clearElement(div);
-                showResults(div);
+                clearElement(naviMain);
+                showResults();
             }
         });
     };
@@ -424,7 +444,7 @@ jQuery(document).ready(function() {
 
 
     
-    var showResults = function(div) {
+    var showResults = function() {
     
         //       Now the form for responsing to the poll
         //
@@ -434,7 +454,7 @@ jQuery(document).ready(function() {
         var invitation = subject;
         var title = kb.any(invitation, DC('title'));
         var location = kb.any(invitation, ICAL('location'));
-        
+        var div = naviMain;
         if (title) div.appendChild(dom.createElement('h3')).textContent = title;
         var author = kb.any(invitation, DC('author'));
         if (author) {
@@ -599,6 +619,16 @@ jQuery(document).ready(function() {
     
     var structure = div.appendChild(dom.createElement('table')); // @@ make responsive style
     structure.setAttribute('style', 'background-color: white; min-width: 40em; min-height: 13em;');
+    
+    var naviLoginoutTR = structure.appendChild(dom.createElement('tr'));
+    var naviLoginout = naviLoginoutTR.appendChild(dom.createElement('td'));
+    naviLoginout.setAttribute('colspan', '3');
+    var loginOutButton = tabulator.panes.utils.loginStatusBox(dom, setUser);
+    // floating divs lead to a mess
+    // loginOutButton.setAttribute('style', 'float: right'); // float the beginning of the end
+    naviLoginout.appendChild(loginOutButton);
+
+
     var naviTop = structure.appendChild(dom.createElement('tr'));
     var naviMain = naviTop.appendChild(dom.createElement('td'));
     naviMain.setAttribute('colspan', '3');
@@ -610,7 +640,7 @@ jQuery(document).ready(function() {
     var naviCenter = naviMenu.appendChild(dom.createElement('td'));
     var naviRight = naviMenu.appendChild(dom.createElement('td'));
 
-    getForms(naviMain);
+    getForms();
 
 });
 
