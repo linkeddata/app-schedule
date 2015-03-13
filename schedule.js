@@ -260,12 +260,14 @@ jQuery(document).ready(function() {
     };
     
     var showAppropriateDisplay = function() {
-        // clearElement(div);
-        if (kb.holds(subject, ns.rdf('type'), ns.wf('TemplateInstance'))) {
+        // On gh-pages, the turtle will not load properly 
+        // but we can trap it as being a non-editable server.
+        if (!tabulator.sparql.editable(detailsDoc.uri, kb) ||
+            kb.holds(subject, ns.rdf('type'), ns.wf('TemplateInstance'))) {
             // This is read-only example e.g. on github pages, etc
             showBootstrap(div);
             return;
-        }SCHED
+        }
         var me_uri = tabulator.preferences.get('me');
         var me = me_uri? kb.sym(me_uri) : null;
         
