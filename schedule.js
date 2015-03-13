@@ -289,7 +289,7 @@ jQuery(document).ready(function() {
     };
     
     var showBootstrap = function showBootstrap() {
-        var div = naviMain;
+        var div = clearElement(naviMain);
         var na = div.appendChild(tabulator.panes.utils.newAppInstance(
             dom, "Start a new poll in a workspace", initializeNewInstanceInWorkspace));
         
