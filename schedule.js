@@ -20,6 +20,7 @@ jQuery(document).ready(function() {
     var ns = tabulator.ns;
     var dom = document;
     var updater = new $rdf.sparqlUpdate(kb);
+    var waitingForLogin = false;
 
     var ICAL = $rdf.Namespace('http://www.w3.org/2002/12/cal/ical#');
     var SCHED = $rdf.Namespace('http://www.w3.org/ns/pim/schedule#');
@@ -101,14 +102,21 @@ jQuery(document).ready(function() {
     var setUser = function(webid) {
         if (webid) {
             tabulator.preferences.set('me', webid);
-            console.log("(Logged in as "+ webid+")")
+            console.log("(SetUser: Logged in as "+ webid+")")
             me = kb.sym(webid);
             // @@ Here enable all kinds of stuff
         } else {
             tabulator.preferences.set('me', '');
-            console.log("(Logged out)")
+            console.log("(SetUser: Logged out)")
             me = null;
-        }    
+        }
+        if (logInOutButton) { 
+            logInOutButton.refresh();  
+        }
+        if (webid && waitingForLogin) {
+            waitingForLogin = false;
+            showAppropriateDisplay();
+        }
     }
     
     var me_uri = tabulator.preferences.get('me');
@@ -163,8 +171,9 @@ jQuery(document).ready(function() {
         */
         toBeCopied = [
             { local: 'index.html', contentType: 'text/html'} ,
-            { local: 'schedule.js', contentType: 'application/javascript'} ,
             { local: 'forms.ttl', contentType: 'text/turtle'} ,
+            { local: 'schedule.js', contentType: 'application/javascript'} ,
+            { local: 'mashlib.js', contentType: 'application/javascript'} , //  @@ centrialize after testing?
         ];
         
         newInstance = kb.sym(newDetailsDoc.uri + '#event');
@@ -200,31 +209,6 @@ jQuery(document).ready(function() {
             );
         });
 
-/*
-        agenda.push(function createResultsFile(){
-            updater.put(newResultsDoc, [], 'text/turtle', function(uri2, ok, message) {
-                    if (ok) {
-                        agenda.shift()();
-                    } else {
-                        complainIfBad(ok, "FAILED to create results store at: "+ there.uri +' : ' + message);
-                        console.log("FAILED to create results store at: "+ there.uri +' : ' + message);
-                    };
-                }
-            );
-        });
-
-        agenda.push(function createHTMLFile(){
-            updater.put(newIndexDoc, OriginalSource, 'text/html', function(uri2, ok, message) {
-                    if (ok) {
-                        agenda.shift()();
-                    } else {
-                        complainIfBad(ok, "FAILED to create HTML file at: "+ there.uri +' : ' + message);
-                        console.log("FAILED to create HTML file at: "+ there.uri +' : ' + message);
-                    };
-                }
-            );
-        });
-*/        
         var f, fi, fn;
         for (f=0; f < toBeCopied.length; f++) {
             var item = toBeCopied[f];
@@ -276,20 +260,30 @@ jQuery(document).ready(function() {
     };
     
     var showAppropriateDisplay = function() {
-        
+        // clearElement(div);
         if (kb.holds(subject, ns.rdf('type'), ns.wf('TemplateInstance'))) {
             // This is read-only example e.g. on github pages, etc
             showBootstrap(div);
             return;
-        }
+        }SCHED
         var me_uri = tabulator.preferences.get('me');
         var me = me_uri? kb.sym(me_uri) : null;
-        var author = kb.any(subject, DC('author'));
-        if (me && (!author || me.sameTerm(author))) { // Allow  editing of tuff  was: && author && me.sameTerm(author)
-            showForms();
-        } else { // no editing not author
-            getResults();
-        }
+        
+        if (!me) {
+            var p = div.appendChild(dom.createElement('p'));
+            p.textContent = 'You need to be logged in.';
+            waitingForLogin = true; // hack
+        } else {
+        
+            var ready = kb.any(subject,  SCHED('ready'));
+//            var author = kb.any(subject, DC('author'));
+//            if (me && (!author || me.sameTerm(author))) { // Allow  editing of tuff  was: && author && me.sameTerm(author)
+            if (!ready) {
+                showForms();
+            } else { // no editing not author
+                getResults();
+            }
+        };
     };
     
     var showBootstrap = function showBootstrap() {
@@ -317,9 +311,9 @@ jQuery(document).ready(function() {
             if (newBase.slice(-1) !== '/') {
                 newBase += '/';
             }
-            initializeNewInstanceAtBase(newBase);
+            initializeNewInstanceAtBase(thisInstance, newBase);
         });
-    }
+    } 
           
     /////////////// The forms to configure the poll
     
@@ -344,18 +338,18 @@ jQuery(document).ready(function() {
                 clearElement(naviMain).appendChild(slides[currentSlide]);
                 
                 if (currentSlide === 0) {
-                    b1.disabled = true;
+                    b1.setAttribute('disabled', '');
                 } else {
-                    delete b1.disabled;
+                    b1.removeAttribute('disabled');
                 }
                 if (currentSlide === slides.length - 1 ) {
-                    b2.disabled = true;
+                    b2.setAttribute('disabled', '');
                     if (!gotDoneButton) { // Only expose at last slide seen
                         naviCenter.appendChild(doneButton); // could also check data shape
                         gotDoneButton = true;
                     }
                 } else {
-                    delete b2.disabled;
+                    b2.removeAttribute('disabled');
                 }
                 
             }
@@ -388,7 +382,7 @@ jQuery(document).ready(function() {
             tabulator.panes.utils.appendForm(document, table, {}, subject, form2, detailsDoc, complainIfBad);
             //table.appendChild(dom.createElement('p')).textContent = "Who will you invite to attend the event? Give their email addresses.";
             tabulator.panes.utils.appendForm(document, table, {}, subject, form3, detailsDoc, complainIfBad);
-             naviCenter.appendChild(doneButton); // could also check data shape
+            naviCenter.appendChild(doneButton); // could also check data shape
            
         }
         // @@@  link config to results
@@ -396,20 +390,24 @@ jQuery(document).ready(function() {
         insertables = [];
         insertables.push($rdf.st(subject, SCHED('availabilityOptions'), SCHED('YesNoMaybe'), detailsDoc));
         insertables.push($rdf.st(subject, SCHED('ready'), new Date(), detailsDoc));
+        insertables.push($rdf.st(subject, SCHED('results'), resultsDoc, detailsDoc)); // @@ also link in results
         
         var doneButton = dom.createElement('button');
         doneButton.textContent = "Done";
         doneButton.addEventListener('click', function(e) {
-            tabulator.sparql.update([], insertables, function(uri,success,error_body){
-                if (!success) {
-                    complainIfBad(success, error_body);
-                } else {
-                    getResults();
-                }
-            });
-
+            if (kb.any(subject, SCHED('ready'))) { // already done
+                getResults();
+            } else {
+                tabulator.sparql.update([], insertables, function(uri,success,error_body){
+                    if (!success) {
+                        complainIfBad(success, error_body);
+                    } else {
+                        getResults();
+                    }
+                });
+            }
         }, false);
-    } // showForms
+} // showForms
     
     
  
@@ -417,11 +415,14 @@ jQuery(document).ready(function() {
     
     var getResults = function () {
         var div = naviMain;
-        fetcher.nowOrWhenFetched(resultsDoc.uri, undefined, function(ok, body){
+        fetcher.nowOrWhenFetched(resultsDoc.uri, undefined, function(ok, body, xhr){
             if (!ok) {   
-                if (true) { /// @@@@@@@ Check explictly for 404 error
-                    updater.put(resultsDoc, [], 'text/turtle', function(uri2, ok, message) {
+                if (0 + xhr.status === 404) { ///  Check explictly for 404 error
+                    console.log("Initializing deails file " + resultsDoc)
+                    updater.put(resultsDoc, [], 'text/turtle', function(uri2, ok, message, xhr) {
                         if (ok) {
+                            kb.fetcher.saveRequestMetadata(xhr, kb, resultsDoc.uri);
+                            kb.fetcher.saveResponseMetadata(xhr, kb); // Drives the isEditable question
                             clearElement(naviMain);
                             showResults();
                         } else {
@@ -429,7 +430,7 @@ jQuery(document).ready(function() {
                             console.log("FAILED to craete results file at: "+ resultsDoc.uri +' : ' + message);
                         };
                     });
-                } else { // Other error, not 404
+                } else { // Other error, not 404 -- do not try to overwite the file
                     complainIfBad(ok, "FAILED to read results file: " + body)
                 }
             } else { // Happy read
@@ -602,7 +603,7 @@ jQuery(document).ready(function() {
         editButton.textContent = "(Edit poll)";
         editButton.addEventListener('click', function(e) {
             clearElement(div);
-            showForms(div);
+            showForms();
         }, false);
         
         clearElement(naviLeft);
@@ -621,12 +622,15 @@ jQuery(document).ready(function() {
     structure.setAttribute('style', 'background-color: white; min-width: 40em; min-height: 13em;');
     
     var naviLoginoutTR = structure.appendChild(dom.createElement('tr'));
-    var naviLoginout = naviLoginoutTR.appendChild(dom.createElement('td'));
-    naviLoginout.setAttribute('colspan', '3');
-    var loginOutButton = tabulator.panes.utils.loginStatusBox(dom, setUser);
+    var naviLoginout1 = naviLoginoutTR.appendChild(dom.createElement('td'));
+    var naviLoginout2 = naviLoginoutTR.appendChild(dom.createElement('td'));
+    var naviLoginout3 = naviLoginoutTR.appendChild(dom.createElement('td'));
+    
+    var logInOutButton = tabulator.panes.utils.loginStatusBox(dom, setUser);
     // floating divs lead to a mess
-    // loginOutButton.setAttribute('style', 'float: right'); // float the beginning of the end
-    naviLoginout.appendChild(loginOutButton);
+    // logInOutButton.setAttribute('style', 'float: right'); // float the beginning of the end
+    naviLoginout3.appendChild(logInOutButton);
+    logInOutButton.setAttribute('style', 'margin-right: 0em;')
 
 
     var naviTop = structure.appendChild(dom.createElement('tr'));
