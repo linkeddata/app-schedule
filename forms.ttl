@@ -2,15 +2,18 @@
 @prefix foaf: <http://xmlns.com/foaf/0.1/>.
 @prefix ical: <http://www.w3.org/2002/12/cal/ical#>.
 @prefix ui: <http://www.w3.org/ns/ui#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
 @prefix sched: <http://www.w3.org/ns/pim/schedule#>.
 
    ical:Vevent ui:annotationForm <#form2>, <#form3>; ui:creationForm <#form1> .
+   
 <#bigForm>
     dc:title
        "Schedule event (single form).";
     a    ui:Group;
     ui:part
        <#form1>, <#form2>, <#form3>.
+
 <#form1>
     dc:title
        "Schedule an event (wizard)";
@@ -19,6 +22,7 @@
         <#form1header>,
         <#eventTitle>,
         <#eventLocation>,
+        <#eventComment>,
         <#eventAuthor>.
 <#eventTitle>
     a    ui:SingleLineTextField;
@@ -28,6 +32,7 @@
        dc:title;
     ui:size
        "40".
+       
 <#eventLocation>
     a    ui:SingleLineTextField;
     ui:maxLength
@@ -36,6 +41,15 @@
        ical:location;
     ui:size
        "40".
+
+<#eventComment>
+    a    ui:MultiLineTextField;
+#    ui:maxLength
+#       "1048";
+#    ui:size
+#       "40".
+    ui:property
+       rdfs:comment.
 
 <#eventAuthor>
    a ui:Multiple; ui:min 1;  ui:min 1; ui:part <#eventAuthorGroup>; ui:property dc:author.
