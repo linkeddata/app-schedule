@@ -456,9 +456,12 @@ jQuery(document).ready(function() {
         
         var invitation = subject;
         var title = kb.any(invitation, DC('title'));
+        var comment = kb.any(invitation, ns.rdfs('comment'));
         var location = kb.any(invitation, ICAL('location'));
         var div = naviMain;
         if (title) div.appendChild(dom.createElement('h3')).textContent = title;
+        if (location) div.appendChild(dom.createElement('address')).textContent = location.value;
+        if (comment) div.appendChild(dom.createElement('p')).textContent = comment.value;
         var author = kb.any(invitation, DC('author'));
         if (author) {
             var authorName = kb.any(author, FOAF('name'));
