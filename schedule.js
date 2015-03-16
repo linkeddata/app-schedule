@@ -293,7 +293,7 @@ jQuery(document).ready(function() {
         
         if (!me) {
             var d = div.appendChild(dom.createElement('div'));
-            var origin =  window && window.localtion ? window.location.orgin : '';
+            var origin =  window && window.location ? window.location.origin : '';
             d.innerHTML = '<p style="font-size: 120%; background-color: #ffe; padding: 2em; margin: 1em; border-radius: 1em;">'+
             'You need to be logged in.<br />To be able to use this app'+
                 ' you need to log in with webid account at a storage provider.</p> '+
