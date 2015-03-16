@@ -259,6 +259,26 @@ jQuery(document).ready(function() {
         });
     };
     
+    var listenToIframe = function() {
+        // Event listener for login (from child iframe)
+        var eventMethod = window.addEventListener ? "addEventListener" : "attachEvent";
+        var eventListener = window[eventMethod];
+        var messageEvent = eventMethod == "attachEvent" ? "onmessage" : "message";
+
+        // Listen to message from child window
+        eventListener(messageEvent,function(e) {
+          if (e.data.slice(0,5) == 'User:') {
+            // the URI of the user (currently either http* or dns:* values)
+            var user = e.data.slice(5, e.data.length);
+            if (user.slice(0, 4) == 'http') {
+              // we have an HTTP URI (probably a WebID), do something with the user variable
+              // i.e. app.login(user);
+                setIt(user);
+            }
+          }
+        },false);    
+    }
+    
     var showAppropriateDisplay = function() {
         // On gh-pages, the turtle will not load properly 
         // but we can trap it as being a non-editable server.
@@ -272,9 +292,13 @@ jQuery(document).ready(function() {
         var me = me_uri? kb.sym(me_uri) : null;
         
         if (!me) {
-            var p = div.appendChild(dom.createElement('p'));
-            p.textContent = 'You need to be logged in.';
-            waitingForLogin = true; // hack
+            var d = div.appendChild(dom.createElement('div'));
+            d.innerHTML = '<p style="font-size: 120%; background-color: #ffe; padding: 2em; margin: 1em; border-radius: 1em;">'+
+            'You need to be logged in.<br />To be able to use this app'+
+                ' you need to log in with webid account at a storage provider.</p> '+
+                '<iframe class="text-center" src="https://linkeddata.github.io/signup/" sandbox="allow-same-origin allow-scripts allow-forms" frameborder="0"></iframe>';
+                listenToIframe();
+                waitingForLogin = true; // hack
         } else {
         
             var ready = kb.any(subject,  SCHED('ready'));

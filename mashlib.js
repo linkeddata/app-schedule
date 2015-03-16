@@ -11040,13 +11040,16 @@ tabulator.panes.utils.checkUser = function(doc, setIt) {
     kb.fetcher.nowOrWhenFetched(userMirror.uri, undefined, function(ok, body) {
         var done = false;
         if (ok) {
-            kb.each(undefined, tabulator.ns.link("requestedURI"), $rdf.uri.docpart(userMirror.uri))
+            kb.each(undefined, tabulator.ns.link('requestedURI'), $rdf.uri.docpart(userMirror.uri))
             .map(function(request){
-                var response = kb.any(request, tabulator.ns.link("response"));
+                var response = kb.any(request, tabulator.ns.link('response'));
                 if (request !== undefined) {
-                    kb.each(response, tabulator.ns.httph("user")).map(function(userHeader){
-                        setIt(userHeader.value.trim());
-                        done = true;
+                    kb.each(response, tabulator.ns.httph('user')).map(function(userHeader){
+                        var username = userHeader.value.trim();
+                        if (userHeader.slice(0,4) !== 'dns:') { // dns: are pseudo-usernames from rww.io and don't count
+                            setIt(userHeader.value.trim());
+                            done = true;
+                        }
                     });
                 }
             });
@@ -13401,6 +13404,7 @@ tabulator.panes.utils.matrixForQuery  = function (dom, query, vx, vy, vvalue, op
         } else {
             cell.textContent = tabulator.Util.label(value); 
         }
+        delete cell.old;
     };
 
     var rowFor = function(y1) { 
@@ -13465,7 +13469,7 @@ tabulator.panes.utils.matrixForQuery  = function (dom, query, vx, vy, vvalue, op
                 row.appendChild(td);
             } else {
                 var t = row.firstChild;
-                for (var j =0; j < col; j++) {
+                for (var j =0; j < col + 1; j++) { // Skip header col too
                     t = t.nextSibling;
                 }
                 row.insertBefore(td, t); 
@@ -13479,47 +13483,68 @@ tabulator.panes.utils.matrixForQuery  = function (dom, query, vx, vy, vvalue, op
         for (var i = 1; i < matrix.children.length; i ++) {
             var row = matrix.children[i];
             for (var j = 1; j < row.children.length; j++) {
-                matrix.children[i].old = true;
+                row.children[j].old = true;
             }
         }
     }
 
     var clearOldCells = function() {
-        var row;
+        var row, cell;
         var colsUsed = [];
         var rowsUsed = [];
+
+        if (options.set_y) {  // Knows y values create rows
+            for (var k=0; k<options.set_y.length; k++) {
+                rowsUsed[options.set_y[k]] = true;
+            }
+        }
+        if (options.set_x) {
+            for (k=0; k<options.set_x.length; k++) {
+                colsUsed[columnNumberFor(options.set_x[k]) +1] = true;
+            }
+        }
+
         for (var i = 1; i < matrix.children.length; i ++) {
             row = matrix.children[i];
             for (var j = 1; j < row.children.length; j++) {
-                var cell = matrix.children[i];
+                cell = row.children[j];
                 if (cell.old)  {
-                    cell.textContent = ''; 
+                    var y = $rdf.fromNT(row.dataValueNT);
+                    var x = $rdf.fromNT(columns[j-1]);
+                    setCell(cell, x, y, null);
                 } else {
                     rowsUsed[row.dataValueNT] = true;
                     colsUsed[j] = true;
                 }
             }
         }
-        for (var i = 1; i < matrix.children.length; i ++) {
-            row = matrix.children[i];
-            if (!rowsUsed[row.dataValueNT]) {
-                matrix.removeChild(row);
-            }
-        }
+
         for (var i = 0; i < matrix.children.length; i ++) {
             row = matrix.children[i];
-            for (var j = row.children.length -1 ; j > 0;  j--) { // backwards
-                var cell = matrix.children[i];
-                if (!columnUsed[j])  {
-                    row.removeChild(cell);
+            if (i > 0 && !rowsUsed[row.dataValueNT]) {
+                delete rows[row.dataValueNT];
+                matrix.removeChild(row);
+            } else {
+                for (var j = row.children.length -1 ; j > 0;  j--) { // backwards
+                    var cell = row.children[j];
+                    if (!colsUsed[j])  {
+                        row.removeChild(cell);
+                    }
                 }
             }
         }
+        var newcolumns = [];
+        for (var j = 0; j < columns.length; j++) {
+            if (colsUsed[j+1]) {
+                newcolumns.push(columns[j]);
+            }
+        };
+        columns = newcolumns;
     };
 
     matrix.refresh = function() {
         markOldCells();
-        kb.query(query, addCellFromBindings, clearOldCells);
+        kb.query(query, addCellFromBindings, undefined, clearOldCells);
     }
 
     var addCellFromBindings = function(bindings) {
@@ -13541,7 +13566,7 @@ tabulator.panes.utils.matrixForQuery  = function (dom, query, vx, vy, vvalue, op
         }
     }
     
-    kb.query(query, addCellFromBindings, whenDone); // Populate the matrix
+    kb.query(query, addCellFromBindings, undefined, whenDone); // Populate the matrix
     return matrix;
 
 }
