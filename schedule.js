@@ -273,7 +273,7 @@ jQuery(document).ready(function() {
             if (user.slice(0, 4) == 'http') {
               // we have an HTTP URI (probably a WebID), do something with the user variable
               // i.e. app.login(user);
-                setIt(user);
+                setUser(user);
             }
           }
         },false);    
