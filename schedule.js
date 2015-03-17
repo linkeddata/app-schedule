@@ -22,10 +22,11 @@ jQuery(document).ready(function() {
     var FOAF = $rdf.Namespace('http://xmlns.com/foaf/0.1/');
     
     var uri = window.location.href;
-    var base = window.document.title = uri.slice(0, uri.lastIndexOf('/')+1);
+    var base = uri.slice(0, uri.lastIndexOf('/')+1);
     var subject_uri = base  + 'details.ttl#event1';
-    var forms_uri = window.document.title = base+ 'forms.ttl';
-
+    
+//    var forms_uri = window.document.title = base+ 'forms.ttl';
+    var forms_uri = 'https://linkeddata.github.io/app-schedule/forms.ttl';
 
     var subject = kb.sym(subject_uri);
     var thisInstance = subject;
@@ -163,10 +164,10 @@ jQuery(document).ready(function() {
         newFormsDoc = kb.sym(newBase + 'forms.ttl');
         */
         toBeCopied = [
-            { local: 'index.html', contentType: 'text/html'} ,
-            { local: 'forms.ttl', contentType: 'text/turtle'} ,
-            { local: 'schedule.js', contentType: 'application/javascript'} ,
-            { local: 'mashlib.js', contentType: 'application/javascript'} , //  @@ centrialize after testing?
+            { local: 'index.html', contentType: 'text/html'} 
+//           , { local: 'forms.ttl', contentType: 'text/turtle'} ,
+//            { local: 'schedule.js', contentType: 'application/javascript'} ,
+//            { local: 'mashlib.js', contentType: 'application/javascript'} , //  @@ centrialize after testing?
         ];
         
         newInstance = kb.sym(newDetailsDoc.uri + '#event');
@@ -202,7 +203,7 @@ jQuery(document).ready(function() {
             );
         });
 
-        var f, fi, fn;
+        var f, fi, fn; //   @@ This needs some form of visible progress bar
         for (f=0; f < toBeCopied.length; f++) {
             var item = toBeCopied[f];
             var fun = function copyItem(item) {
@@ -224,6 +225,7 @@ jQuery(document).ready(function() {
         agenda.push(function(){  // give the user links to the new app
         
             var p = div.appendChild(dom.createElement('p'));
+            p.setAttribute('style', 'font-size: 140%;') 
             p.innerHTML = 
                 "Your <a href='" + newIndexDoc.uri + "'><b>new scheduler</b></a> is ready to be set up. "+
                 "<br/><br/><a href='" + newIndexDoc.uri + "'>Say when you what days work for you.</a>";
