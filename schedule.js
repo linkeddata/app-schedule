@@ -25,8 +25,9 @@ jQuery(document).ready(function() {
     var base = uri.slice(0, uri.lastIndexOf('/')+1);
     var subject_uri = base  + 'details.ttl#event1';
     
-//    var forms_uri = window.document.title = base+ 'forms.ttl';
-    var forms_uri = 'https://linkeddata.github.io/app-schedule/forms.ttl';
+    var forms_uri = window.document.title = base+ 'forms.ttl';
+//    var forms_uri = 'https://linkeddata.github.io/app-schedule/forms.ttl'; // CORS blocks
+
 
     var subject = kb.sym(subject_uri);
     var thisInstance = subject;
@@ -159,13 +160,10 @@ jQuery(document).ready(function() {
         newDetailsDoc = kb.sym(newBase + 'details.ttl');
         newResultsDoc = kb.sym(newBase + 'results.ttl');
         newIndexDoc = kb.sym(newBase + 'index.html');
-        /*
-        newScriptDoc = kb.sym(newBase + 'schedule.js');
-        newFormsDoc = kb.sym(newBase + 'forms.ttl');
-        */
+
         toBeCopied = [
-            { local: 'index.html', contentType: 'text/html'} 
-//           , { local: 'forms.ttl', contentType: 'text/turtle'} ,
+            { local: 'index.html', contentType: 'text/html'} ,
+            { local: 'forms.ttl', contentType: 'text/turtle'} 
 //            { local: 'schedule.js', contentType: 'application/javascript'} ,
 //            { local: 'mashlib.js', contentType: 'application/javascript'} , //  @@ centrialize after testing?
         ];
