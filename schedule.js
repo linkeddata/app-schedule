@@ -1,11 +1,4 @@
-/*jQuery.ajaxPrefilter(function(options) {
-    if (options.crossDomain) {
-        options.url = "https://w3.scripts.mit.edu/proxy?uri=" + encodeURIComponent(options.url);
-    }
-});
-*/
-var OriginalSource = document.children ? document.children[0].outerHTML : // Chrome
-            document.childNodes[1].outerHTML; // Safari
+// Scheduler app 
             
 jQuery(document).ready(function() {
 
@@ -282,6 +275,7 @@ jQuery(document).ready(function() {
     var showAppropriateDisplay = function() {
         // On gh-pages, the turtle will not load properly 
         // but we can trap it as being a non-editable server.
+        
         if (!tabulator.sparql.editable(detailsDoc.uri, kb) ||
             kb.holds(subject, ns.rdf('type'), ns.wf('TemplateInstance'))) {
             // This is read-only example e.g. on github pages, etc
@@ -292,27 +286,29 @@ jQuery(document).ready(function() {
         var me = me_uri? kb.sym(me_uri) : null;
         
         if (!me) {
-            var d = div.appendChild(dom.createElement('div'));
-            var origin =  window && window.location ? window.location.origin : '';
-            d.innerHTML = '<p style="font-size: 120%; background-color: #ffe; padding: 2em; margin: 1em; border-radius: 1em;">'+
-            'You need to be logged in.<br />To be able to use this app'+
-                ' you need to log in with webid account at a storage provider.</p> '+
-                '<iframe class="text-center" src="https://linkeddata.github.io/signup/?ref=' + origin + '" '+
-                'style="margin-left: 1em; margin-right: 1em; width: 95%; height: 40em;" '+
-                ' sandbox="allow-same-origin allow-scripts allow-forms" frameborder="0"></iframe>';
-                listenToIframe();
-                waitingForLogin = true; // hack
-        } else {
-        
+            showSignon();
+        } else {        
             var ready = kb.any(subject,  SCHED('ready'));
-//            var author = kb.any(subject, DC('author'));
-//            if (me && (!author || me.sameTerm(author))) { // Allow  editing of tuff  was: && author && me.sameTerm(author)
             if (!ready) {
                 showForms();
             } else { // no editing not author
                 getResults();
             }
         };
+    };
+    
+    var showSignon = function showSignon() {
+        var d = clearElement(naviMain);
+        // var d = div.appendChild(dom.createElement('div'));
+        var origin =  window && window.location ? window.location.origin : '';
+        d.innerHTML = '<p style="font-size: 120%; background-color: #ffe; padding: 2em; margin: 1em; border-radius: 1em;">'+
+        'You need to be logged in.<br />To be able to use this app'+
+            ' you need to log in with webid account at a storage provider.</p> '+
+            '<iframe class="text-center" src="https://linkeddata.github.io/signup/?ref=' + origin + '" '+
+            'style="margin-left: 1em; margin-right: 1em; width: 95%; height: 40em;" '+
+            ' sandbox="allow-same-origin allow-scripts allow-forms" frameborder="0"></iframe>';
+            listenToIframe();
+            waitingForLogin = true; // hack
     };
     
     var showBootstrap = function showBootstrap() {
@@ -436,7 +432,7 @@ jQuery(document).ready(function() {
                 });
             }
         }, false);
-} // showForms
+    } // showForms
     
     
  
