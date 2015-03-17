@@ -273,21 +273,23 @@ jQuery(document).ready(function() {
     }
     
     var showAppropriateDisplay = function() {
-        // On gh-pages, the turtle will not load properly 
-        // but we can trap it as being a non-editable server.
-        
-        if (!tabulator.sparql.editable(detailsDoc.uri, kb) ||
-            kb.holds(subject, ns.rdf('type'), ns.wf('TemplateInstance'))) {
-            // This is read-only example e.g. on github pages, etc
-            showBootstrap(div);
-            return;
-        }
         var me_uri = tabulator.preferences.get('me');
         var me = me_uri? kb.sym(me_uri) : null;
         
         if (!me) {
             showSignon();
-        } else {        
+        } else {
+                
+            // On gh-pages, the turtle will not load properly (bad mime type)
+            // but we can trap it as being a non-editable server.
+            
+            if (!tabulator.sparql.editable(detailsDoc.uri, kb) ||
+                kb.holds(subject, ns.rdf('type'), ns.wf('TemplateInstance'))) {
+                // This is read-only example e.g. on github pages, etc
+                showBootstrap(div);
+                return;
+            }
+
             var ready = kb.any(subject,  SCHED('ready'));
             if (!ready) {
                 showForms();
