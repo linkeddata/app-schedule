@@ -239,14 +239,18 @@ jQuery(document).ready(function() {
 
 
     var getForms = function () {
+        console.log("getforms()");
         fetcher.nowOrWhenFetched(forms_uri, undefined, function(ok, body){
+            console.log("getforms() ok? " + ok);
             if (!ok) return complainIfBad(ok, body);
             getDetails();
         });
     };
     
     var getDetails = function() {
+        console.log("getDetails()"); // Looking for blank screen hang-up
         fetcher.nowOrWhenFetched(detailsDoc.uri, undefined, function(ok, body){
+            console.log("getDetails() ok? " + ok);
             if (!ok) return complainIfBad(ok, body);
             showAppropriateDisplay();
         });
@@ -273,6 +277,7 @@ jQuery(document).ready(function() {
     }
     
     var showAppropriateDisplay = function() {
+        console.log("showAppropriateDisplay()");
         var me_uri = tabulator.preferences.get('me');
         var me = me_uri? kb.sym(me_uri) : null;
         
