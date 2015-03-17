@@ -656,12 +656,14 @@ jQuery(document).ready(function() {
     var naviLoginout2 = naviLoginoutTR.appendChild(dom.createElement('td'));
     var naviLoginout3 = naviLoginoutTR.appendChild(dom.createElement('td'));
     
+    var logInOutButton = null;
+    /*
     var logInOutButton = tabulator.panes.utils.loginStatusBox(dom, setUser);
     // floating divs lead to a mess
     // logInOutButton.setAttribute('style', 'float: right'); // float the beginning of the end
     naviLoginout3.appendChild(logInOutButton);
     logInOutButton.setAttribute('style', 'margin-right: 0em;')
-
+    */
 
     var naviTop = structure.appendChild(dom.createElement('tr'));
     var naviMain = naviTop.appendChild(dom.createElement('td'));
