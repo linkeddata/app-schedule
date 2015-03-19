@@ -27,7 +27,7 @@ jQuery(document).ready(function() {
     
     var forms_uri = window.document.title = base+ 'forms.ttl';
 //    var forms_uri = 'https://linkeddata.github.io/app-schedule/forms.ttl'; // CORS blocks
-
+    var scriptBase = 'https://linkeddata.github.io/app-schedule/';
 
     var subject = kb.sym(subject_uri);
     var thisInstance = subject;
@@ -378,6 +378,7 @@ jQuery(document).ready(function() {
                     b2.setAttribute('disabled', '');
                     if (!gotDoneButton) { // Only expose at last slide seen
                         naviCenter.appendChild(doneButton); // could also check data shape
+                        naviCenter.appendChild(emailButton); 
                         gotDoneButton = true;
                     }
                 } else {
@@ -410,9 +411,7 @@ jQuery(document).ready(function() {
             // @@@ create the initial config doc if not exist
             var table = div.appendChild(dom.createElement('table'));
             tabulator.panes.utils.appendForm(document, table, {}, subject, form1, detailsDoc, complainIfBad);
-            //table.appendChild(dom.createElement('p')).textContent = "Pick some dates which would work for you.";
             tabulator.panes.utils.appendForm(document, table, {}, subject, form2, detailsDoc, complainIfBad);
-            //table.appendChild(dom.createElement('p')).textContent = "Who will you invite to attend the event? Give their email addresses.";
             tabulator.panes.utils.appendForm(document, table, {}, subject, form3, detailsDoc, complainIfBad);
             naviCenter.appendChild(doneButton); // could also check data shape
            
@@ -424,6 +423,9 @@ jQuery(document).ready(function() {
         insertables.push($rdf.st(subject, SCHED('ready'), new Date(), detailsDoc));
         insertables.push($rdf.st(subject, SCHED('results'), resultsDoc, detailsDoc)); // @@ also link in results
         
+
+
+
         var doneButton = dom.createElement('button');
         doneButton.textContent = "Done";
         doneButton.addEventListener('click', function(e) {
@@ -437,6 +439,29 @@ jQuery(document).ready(function() {
                         getResults();
                     }
                 });
+            }
+        }, false);
+        
+        var emailButton = dom.createElement('button');
+        var emailIcon = emailButton.appendChild(dom.createElement('img'));
+        emailIcon.setAttribute('src', scriptBase + 'envelope-icon.png')
+        emailButton.textContent = "email";
+        emailButton.addEventListener('click', function(e) {
+            if (kb.any(subject, SCHED('ready'))) { 
+                getResults();
+            } else {
+                var malito = 'mailto:'
+                var invitees = kb.each(subject, SCHED('invitee')).map(function(who){
+                    var mbox = kb.any(who, FOAF('mbox'));
+                    return mbox ? mbox.uri.slice(7) : '';
+                }).join(',');
+                
+                var title = '' + (kb.any(subject, DC('title')) || '');
+                mailto += '?subject=' + encodeURIComponent( title + "-- When can we meet?" )
+                mailto += '&body=' + encodeURIComponent( title + "\n\nWhen can you?\n\nSee " + base + 'index.html\n' )
+                
+                console.log('Mail: ' + mailto);
+                window.location.href = mailto;
             }
         }, false);
     } // showForms
