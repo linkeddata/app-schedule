@@ -447,12 +447,12 @@ jQuery(document).ready(function() {
         emailIcon.setAttribute('src', scriptBase + 'envelope-icon.png')
         emailButton.textContent = "email";
         emailButton.addEventListener('click', function(e) {
-            var malito = 'mailto:'
+            var mailto = 'mailto:'
             var invitees = kb.each(subject, SCHED('invitee')).map(function(who){
                 var mbox = kb.any(who, FOAF('mbox'));
                 return mbox ? '' + mbox : '';
             }).join(',');
-            
+            mailto += invitees;
             var title = '' + (kb.any(subject, DC('title')) || '');
             mailto += '?subject=' + encodeURIComponent( title + "-- When can we meet?" )
             mailto += '&body=' + encodeURIComponent( title + "\n\nWhen can you?\n\nSee " + base + 'index.html\n' )
