@@ -447,22 +447,18 @@ jQuery(document).ready(function() {
         emailIcon.setAttribute('src', scriptBase + 'envelope-icon.png')
         emailButton.textContent = "email";
         emailButton.addEventListener('click', function(e) {
-            if (kb.any(subject, SCHED('ready'))) { 
-                getResults();
-            } else {
-                var malito = 'mailto:'
-                var invitees = kb.each(subject, SCHED('invitee')).map(function(who){
-                    var mbox = kb.any(who, FOAF('mbox'));
-                    return mbox ? mbox.uri.slice(7) : '';
-                }).join(',');
-                
-                var title = '' + (kb.any(subject, DC('title')) || '');
-                mailto += '?subject=' + encodeURIComponent( title + "-- When can we meet?" )
-                mailto += '&body=' + encodeURIComponent( title + "\n\nWhen can you?\n\nSee " + base + 'index.html\n' )
-                
-                console.log('Mail: ' + mailto);
-                window.location.href = mailto;
-            }
+            var malito = 'mailto:'
+            var invitees = kb.each(subject, SCHED('invitee')).map(function(who){
+                var mbox = kb.any(who, FOAF('mbox'));
+                return mbox ? '' + mbox : '';
+            }).join(',');
+            
+            var title = '' + (kb.any(subject, DC('title')) || '');
+            mailto += '?subject=' + encodeURIComponent( title + "-- When can we meet?" )
+            mailto += '&body=' + encodeURIComponent( title + "\n\nWhen can you?\n\nSee " + base + 'index.html\n' )
+            
+            console.log('Mail: ' + mailto);
+            window.location.href = mailto;
         }, false);
     } // showForms
     
