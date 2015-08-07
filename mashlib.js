@@ -5,7 +5,7 @@ tabulator = {};
 tabulator.isExtension = false;
 
 // base for icons etc
-tabulator.scriptBase = 'https://linkeddata.github.com/tabulator/'; // Or app dev overwrite to point to your app's own copy
+tabulator.scriptBase = 'https://linkeddata.github.io/tabulator/'; // Or app dev overwrite to point to your app's own copy
 
 tabulator.iconPrefix = tabulator.scriptBase;
 
@@ -501,8 +501,10 @@ $rdf.Util.string = {
     }
 };
 
+// Reomved 2015-08-05 timbl - unused and depended on jQuery!
 // from http://dev.jquery.com/browser/trunk/jquery/src/core.js
-// Overlap with JQuery -- we try to keep the rdflib.js and jquery libraries separate at the moment.
+// Dependency with JQuery -- we try to keep the rdflib.js and jquery libraries separate at the moment.
+/*
 $rdf.Util.extend = function () {
     // copy reference to target object
     var target = arguments[0] || {},
@@ -571,33 +573,35 @@ $rdf.Util.extend = function () {
     // Return the modified object
     return target;
 };
-
+*/
 
 
 
 
 /*
- * Implements URI-specific functions
- *
- * See RFC 2386
- *
- * See also:
- *   http://www.w3.org/2005/10/ajaw/uri.js
- *   http://www.w3.org/2000/10/swap/uripath.py
- *
- */
-var $rdf, k, v, _base, _ref,
+# Implements URI-specific functions
+#
+# See RFC 2386
+#
+# See also:
+#   http://www.w3.org/2005/10/ajaw/uri.js
+#   http://www.w3.org/2000/10/swap/uripath.py
+#
+*/
+
+var $rdf, k, v, _base, _ref, _ref1, _ref2,
   __hasProp = {}.hasOwnProperty;
 
 if (typeof $rdf === "undefined" || $rdf === null) {
   $rdf = {};
 }
 
-if ($rdf.Util == null) {
+if ((_ref = $rdf.Util) == null) {
   $rdf.Util = {};
 }
 
 $rdf.uri = (function() {
+
   function uri() {}
 
   uri.join = function(given, base) {
@@ -624,7 +628,7 @@ $rdf.uri = (function() {
       alert("Invalid base: " + base + " in join with given: " + given);
       return given;
     }
-    baseScheme = base.slice(0, +baseColon + 1 || 9e9);
+    baseScheme = base.slice(0, baseColon + 1 || 9e9);
     if (given.indexOf('//') === 0) {
       return baseScheme + given;
     }
@@ -656,7 +660,7 @@ $rdf.uri = (function() {
       return baseScheme + given;
     }
     if (lastSlash >= 0 && lastSlash < path.length - 1) {
-      path = path.slice(0, +lastSlash + 1 || 9e9);
+      path = path.slice(0, lastSlash + 1 || 9e9);
     }
     path += given;
     while (path.match(/[^\/]*\/\.\.\//)) {
@@ -680,7 +684,7 @@ $rdf.uri = (function() {
   };
 
   uri.refTo = function(base, uri) {
-    var c, i, j, k, l, n, s, _i, _j, _k, _len, _len1, _ref;
+    var c, i, j, k, l, n, s, _i, _j, _k, _len, _len1, _ref1;
     if (!base) {
       return uri;
     }
@@ -719,9 +723,9 @@ $rdf.uri = (function() {
       return uri;
     }
     n = 0;
-    _ref = base.slice(i);
-    for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
-      c = _ref[_j];
+    _ref1 = base.slice(i);
+    for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+      c = _ref1[_j];
       if (c === '/') {
         n++;
       }
@@ -767,29 +771,30 @@ $rdf.uri = (function() {
 
   return uri;
 
-})();
+}).call(this);
 
 $rdf.Util.uri = $rdf.uri;
 
 if ((typeof module !== "undefined" && module !== null ? module.exports : void 0) != null) {
-  if ((_base = module.exports).Util == null) {
+  if ((_ref1 = (_base = module.exports).Util) == null) {
     _base.Util = {};
   }
-  _ref = $rdf.Util;
-  for (k in _ref) {
-    if (!__hasProp.call(_ref, k)) continue;
-    v = _ref[k];
+  _ref2 = $rdf.Util;
+  for (k in _ref2) {
+    if (!__hasProp.call(_ref2, k)) continue;
+    v = _ref2[k];
     module.exports.Util[k] = v;
   }
   module.exports.uri = $rdf.uri;
 }
 /*
- * These are the classes corresponding to the RDF and N3 data models
- *
- * Designed to look like rdflib and cwm
- *
- * This is coffee see http://coffeescript.org
- */
+# These are the classes corresponding to the RDF and N3 data models
+#
+# Designed to look like rdflib and cwm
+#
+# This is coffee see http://coffeescript.org
+*/
+
 var $rdf, k, v,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
@@ -799,14 +804,15 @@ if (typeof $rdf === "undefined" || $rdf === null) {
   $rdf = {};
 }
 
-
 /*
   the superclass of all RDF Statement objects, that is
   $rdf.Symbol, $rdf.Literal, $rdf.BlankNode
   No class extends this yet, but it could be a place to put common behavior.
- */
+*/
+
 
 $rdf.Node = (function() {
+
   function Node() {}
 
   Node.prototype.substitute = function(bindings) {
@@ -818,6 +824,7 @@ $rdf.Node = (function() {
 })();
 
 $rdf.Empty = (function(_super) {
+
   __extends(Empty, _super);
 
   function Empty() {
@@ -836,16 +843,17 @@ $rdf.Empty = (function(_super) {
 
 })($rdf.Node);
 
-
 /*
    A named node in an RDF graph
     todo: badly named. 
     No, formally a URI is a string, this is a node whose name is a URI.
     Connolly pointed out it isa symbol on the language.
     @param uri the uri as string
- */
+*/
+
 
 $rdf.Symbol = (function(_super) {
+
   __extends(Symbol, _super);
 
   function Symbol(uri) {
@@ -909,6 +917,7 @@ if ($rdf.NextId != null) {
 $rdf.NTAnonymousNodePrefix = "_:n";
 
 $rdf.BlankNode = (function(_super) {
+
   __extends(BlankNode, _super);
 
   function BlankNode(id) {
@@ -952,16 +961,18 @@ $rdf.BlankNode = (function(_super) {
 })($rdf.Node);
 
 $rdf.Literal = (function(_super) {
+
   __extends(Literal, _super);
 
   function Literal(value, lang, datatype) {
+    var _ref, _ref1;
     this.value = value;
     this.lang = lang;
     this.datatype = datatype;
-    if (this.lang == null) {
+    if ((_ref = this.lang) == null) {
       this.lang = void 0;
     }
-    if (this.datatype == null) {
+    if ((_ref1 = this.datatype) == null) {
       this.datatype = void 0;
     }
   }
@@ -1022,6 +1033,7 @@ $rdf.Literal = (function(_super) {
 })($rdf.Node);
 
 $rdf.Collection = (function(_super) {
+
   __extends(Collection, _super);
 
   function Collection(initial) {
@@ -1085,12 +1097,12 @@ $rdf.Collection.prototype.sameTerm = $rdf.BlankNode.prototype.sameTerm;
 
 $rdf.Collection.prototype.compareTerm = $rdf.BlankNode.prototype.compareTerm;
 
-
 /*
  function to transform a value into an $rdf.Node
  @param val can be an rdf.Node, a date, string, number, boolean, or undefined. RDF Nodes are returned as is,
    undefined as undefined
- */
+*/
+
 
 $rdf.term = function(val) {
   var d2, dt, elt, value, x, _i, _len;
@@ -1131,6 +1143,7 @@ $rdf.term = function(val) {
 };
 
 $rdf.Statement = (function() {
+
   function Statement(subject, predicate, object, why) {
     this.subject = $rdf.term(subject);
     this.predicate = $rdf.term(predicate);
@@ -1159,6 +1172,7 @@ $rdf.st = function(subject, predicate, object, why) {
 };
 
 $rdf.Formula = (function(_super) {
+
   __extends(Formula, _super);
 
   function Formula() {
@@ -1244,13 +1258,13 @@ $rdf.Formula = (function(_super) {
     };
   };
 
-
   /*
-  transform an NTriples string format into an $rdf.Node
-  The bnode bit should not be used on program-external values; designed
-  for internal work such as storing a bnode id in an HTML attribute.
-  This will only parse the strings generated by the vaious toNT() methods.
-   */
+      transform an NTriples string format into an $rdf.Node
+      The bnode bit should not be used on program-external values; designed
+      for internal work such as storing a bnode id in an HTML attribute.
+      This will only parse the strings generated by the vaious toNT() methods.
+  */
+
 
   Formula.prototype.fromNT = function(str) {
     var dt, k, lang, x;
@@ -1297,22 +1311,22 @@ $rdf.Formula = (function(_super) {
     var elt, results, sts, _i, _j, _k, _l, _len, _len1, _len2, _len3;
     results = [];
     sts = this.statementsMatching(s, p, o, w, false);
-    if (s == null) {
+    if (!(s != null)) {
       for (_i = 0, _len = sts.length; _i < _len; _i++) {
         elt = sts[_i];
         results.push(elt.subject);
       }
-    } else if (p == null) {
+    } else if (!(p != null)) {
       for (_j = 0, _len1 = sts.length; _j < _len1; _j++) {
         elt = sts[_j];
         results.push(elt.predicate);
       }
-    } else if (o == null) {
+    } else if (!(o != null)) {
       for (_k = 0, _len2 = sts.length; _k < _len2; _k++) {
         elt = sts[_k];
         results.push(elt.object);
       }
-    } else if (w == null) {
+    } else if (!(w != null)) {
       for (_l = 0, _len3 = sts.length; _l < _len3; _l++) {
         elt = sts[_l];
         results.push(elt.why);
@@ -1324,13 +1338,13 @@ $rdf.Formula = (function(_super) {
   Formula.prototype.any = function(s, p, o, w) {
     var st;
     st = this.anyStatementMatching(s, p, o, w);
-    if (st == null) {
+    if (!(st != null)) {
       return void 0;
-    } else if (s == null) {
+    } else if (!(s != null)) {
       return st.subject;
-    } else if (p == null) {
+    } else if (!(p != null)) {
       return st.predicate;
-    } else if (o == null) {
+    } else if (!(o != null)) {
       return st.object;
     }
     return void 0;
@@ -1396,15 +1410,15 @@ $rdf.Formula = (function(_super) {
     }
   };
 
-
   /*
-  For thisClass or any subclass, anything which has it is its type
-  or is the object of something which has the type as its range, or subject
-  of something which has the type as its domain
-  We don't bother doing subproperty (yet?)as it doesn't seeem to be used much.
-  Get all the Classes of which we can RDFS-infer the subject is a member
-  @returns a hash of URIs
-   */
+      For thisClass or any subclass, anything which has it is its type
+      or is the object of something which has the type as its range, or subject
+      of something which has the type as its domain
+      We don't bother doing subproperty (yet?)as it doesn't seeem to be used much.
+      Get all the Classes of which we can RDFS-infer the subject is a member
+      @returns a hash of URIs
+  */
+
 
   Formula.prototype.findMembersNT = function(thisClass) {
     var members, pred, seeds, st, t, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _m, _ref, _ref1, _ref2, _ref3, _ref4, _ref5;
@@ -1441,13 +1455,13 @@ $rdf.Formula = (function(_super) {
     return members;
   };
 
-
   /*
-  transform a collection of NTriple URIs into their URI strings
-  @param t some iterable colletion of NTriple URI strings
-  @return a collection of the URIs as strings
-  todo: explain why it is important to go through NT
-   */
+      transform a collection of NTriple URIs into their URI strings
+      @param t some iterable colletion of NTriple URI strings
+      @return a collection of the URIs as strings
+      todo: explain why it is important to go through NT
+  */
+
 
   Formula.prototype.NTtoURI = function(t) {
     var k, uris, v;
@@ -1470,14 +1484,14 @@ $rdf.Formula = (function(_super) {
     return this.NTtoURI(this.findMembersNT(subject));
   };
 
-
   /*
-  Get all the Classes of which we can RDFS-infer the subject is a member
-  todo: This will loop is there is a class subclass loop (Sublass loops are not illegal)
-  Returns a hash table where key is NT of type and value is statement why we think so.
-  Does NOT return terms, returns URI strings.
-  We use NT representations in this version because they handle blank nodes.
-   */
+      Get all the Classes of which we can RDFS-infer the subject is a member
+      todo: This will loop is there is a class subclass loop (Sublass loops are not illegal)
+      Returns a hash table where key is NT of type and value is statement why we think so.
+      Does NOT return terms, returns URI strings.
+      We use NT representations in this version because they handle blank nodes.
+  */
+
 
   Formula.prototype.findTypesNT = function(subject) {
     var domain, range, rdftype, st, types, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref, _ref1, _ref2, _ref3;
@@ -1508,13 +1522,13 @@ $rdf.Formula = (function(_super) {
     return this.transitiveClosure(types, this.sym('http://www.w3.org/2000/01/rdf-schema#subClassOf'), false);
   };
 
-
   /*
-  Get all the Classes of which we can RDFS-infer the subject is a subclass
-  Returns a hash table where key is NT of type and value is statement why we think so.
-  Does NOT return terms, returns URI strings.
-  We use NT representations in this version because they handle blank nodes.
-   */
+      Get all the Classes of which we can RDFS-infer the subject is a subclass
+      Returns a hash table where key is NT of type and value is statement why we think so.
+      Does NOT return terms, returns URI strings.
+      We use NT representations in this version because they handle blank nodes.
+  */
+
 
   Formula.prototype.findSuperClassesNT = function(subject) {
     var types;
@@ -1523,13 +1537,13 @@ $rdf.Formula = (function(_super) {
     return this.transitiveClosure(types, this.sym('http://www.w3.org/2000/01/rdf-schema#subClassOf'), false);
   };
 
-
   /*
-  Get all the Classes of which we can RDFS-infer the subject is a superclass
-  Returns a hash table where key is NT of type and value is statement why we think so.
-  Does NOT return terms, returns URI strings.
-  We use NT representations in this version because they handle blank nodes.
-   */
+      Get all the Classes of which we can RDFS-infer the subject is a superclass
+      Returns a hash table where key is NT of type and value is statement why we think so.
+      Does NOT return terms, returns URI strings.
+      We use NT representations in this version because they handle blank nodes.
+  */
+
 
   Formula.prototype.findSubClassesNT = function(subject) {
     var types;
@@ -1538,11 +1552,11 @@ $rdf.Formula = (function(_super) {
     return this.transitiveClosure(types, this.sym('http://www.w3.org/2000/01/rdf-schema#subClassOf'), true);
   };
 
-
   /*
-  Find the types in the list which have no *stored* supertypes
-  We exclude the universal class, owl:Things and rdf:Resource, as it is information-free.
-   */
+      Find the types in the list which have no *stored* supertypes
+      We exclude the universal class, owl:Things and rdf:Resource, as it is information-free.
+  */
+
 
   Formula.prototype.topTypeURIs = function(types) {
     var j, k, n, tops, v, _i, _len, _ref;
@@ -1572,13 +1586,13 @@ $rdf.Formula = (function(_super) {
     return tops;
   };
 
-
   /*
-  Find the types in the list which have no *stored* subtypes
-  These are a set of classes which provide by themselves complete
-  information -- the other classes are redundant for those who
-  know the class DAG.
-   */
+      Find the types in the list which have no *stored* subtypes
+      These are a set of classes which provide by themselves complete
+      information -- the other classes are redundant for those who
+      know the class DAG.
+  */
+
 
   Formula.prototype.bottomTypeURIs = function(types) {
     var bots, bottom, elt, k, subs, v, _i, _len, _ref;
@@ -1640,18 +1654,19 @@ $rdf.Namespace = $rdf.Formula.prototype.ns;
 
 $rdf.variable = $rdf.Formula.prototype.variable;
 
-
 /*
- * Variable
- *
- * Variables are placeholders used in patterns to be matched.
- * In cwm they are symbols which are the formula's list of quantified variables.
- * In sparl they are not visibily URIs.  Here we compromise, by having
- * a common special base URI for variables. Their names are uris,
- * but the ? nottaion has an implicit base uri of 'varid:'
- */
+# Variable
+#
+# Variables are placeholders used in patterns to be matched.
+# In cwm they are symbols which are the formula's list of quantified variables.
+# In sparl they are not visibily URIs.  Here we compromise, by having
+# a common special base URI for variables. Their names are uris,
+# but the ? nottaion has an implicit base uri of 'varid:'
+*/
+
 
 $rdf.Variable = (function(_super) {
+
   __extends(Variable, _super);
 
   function Variable(rel) {
@@ -4418,6 +4433,7 @@ $rdf.sparqlUpdateParser = function(str, kb, base) {
     } // while
     //return clauses
 
+
 }; // End of spaqlUpdateParser
 
 
@@ -4494,6 +4510,7 @@ $rdf.IndexedFormula.prototype.applyPatch = function(patch, target, patchCallback
         doPatch(patchCallback)
     };
 };
+
 
 
 
@@ -5879,16 +5896,19 @@ $rdf.sparqlUpdate = function() {
             if (request !== undefined) {
                 var response = kb.any(request, this.ns.link("response"));
                 if (request !== undefined) {
+                    var acceptPatch = kb.each(response, this.ns.httph("accept-patch"));
+                    if (acceptPatch.length) {
+                        for (var i = 0; i < acceptPatch.length; i++) {
+                            var method = acceptPatch[i].value.trim();
+                            if (method.indexOf('application/sparql-update') >=0 ) return 'SPARQL';
+                        }
+                    }
                     var author_via = kb.each(response, this.ns.httph("ms-author-via"));
                     if (author_via.length) {
                         for (var i = 0; i < author_via.length; i++) {
                             var method = author_via[i].value.trim();
                             if (method.indexOf('SPARQL') >=0 ) return 'SPARQL';
                             if (method.indexOf('DAV') >=0 ) return 'DAV';
-//                            if (author_via[i].value == "SPARQL" || author_via[i].value == "DAV")
-                                // dump("sparql.editable: Success for "+uri+": "+author_via[i] +"\n");
-                                //return author_via[i].value;
-                                
                         }
                     }
                     var status = kb.each(response, this.ns.http("status"));
@@ -6336,7 +6356,8 @@ $rdf.sparqlUpdate = function() {
                 var stream = Components.classes["@mozilla.org/network/file-output-stream;1"]
                 .createInstance(Components.interfaces.nsIFileOutputStream);
 
-                stream.init(file, 0x02 | 0x08 | 0x20, 0666, 0);
+                // Various JS systems object to 0666 in struct mode as dangerous
+                stream.init(file, 0x02 | 0x08 | 0x20, parseInt('0666',8), 0);
 
                 //write data to file then close output stream
                 stream.write(documentString, documentString.length);
@@ -7560,7 +7581,6 @@ $rdf.UpdatesVia = (function() {
     this.register = __bind(this.register, this);
     this.graph = {};
     this.via = {};
-    this.fetcher.addCallback('headers', this.onHeaders);
   }
 
   UpdatesVia.prototype.register = function(via, uri) {
@@ -7757,7 +7777,7 @@ $rdf.Fetcher = function(store, timeout, async) {
                 // link rel
                 var links = this.dom.getElementsByTagName('link');
                 for (var x = links.length - 1; x >= 0; x--) {
-                    sf.linkData(xhr, links[x].getAttribute('rel'), links[x].getAttribute('href'));
+                    sf.linkData(xhr, links[x].getAttribute('rel'), links[x].getAttribute('href'), xhr.resource);
                 }
 
                 //GRDDL
@@ -8089,19 +8109,52 @@ $rdf.Fetcher = function(store, timeout, async) {
         return xhr
     }
 
-    this.linkData = function(xhr, rel, uri) {
+    // in the why part of the quad distinguish between HTML and HTTP header
+    this.linkData = function(xhr, rel, uri, why) {
         var x = xhr.resource;
         if (!uri) return;
+        var predicate =  ns.rdfs('seeAlso');
         // See http://www.w3.org/TR/powder-dr/#httplink for describedby 2008-12-10
+        var obj = kb.sym($rdf.uri.join(uri, xhr.resource.uri));
         if (rel == 'alternate' || rel == 'seeAlso' || rel == 'meta' || rel == 'describedby') {
-            // var join = $rdf.uri.join2;   // doesn't work, now a method of rdf.uri
-            var obj = kb.sym($rdf.uri.join(uri, xhr.resource.uri))
-            if (obj.uri != xhr.resource) {
-                kb.add(xhr.resource, ns.rdfs('seeAlso'), obj, xhr.resource);
-                // $rdf.log.info("Loading " + obj + " from link rel in " + xhr.resource);
+            if (obj.uri != xhr.resource.uri) {
+                kb.add(xhr.resource, predicate, obj, why);
+            }
+        } else {
+        // See https://www.iana.org/assignments/link-relations/link-relations.xml
+        // Alas not yet in RDF yet for each predicate
+            predicate = kb.sym($rdf.uri.join(rel, 'http://www.iana.org/assignments/link-relations/'));
+            kb.add(xhr.resource, predicate, obj, why);
+        }
+    };
+
+    this.parseLinkHeader = function(xhr, thisReq) {
+        var link;
+        try {
+            link = xhr.getResponseHeader('link'); // May crash from CORS error
+        }catch(e){}
+        if (link) {
+            var rel;
+            var lines = link.replace(/ /g, '').split(',');
+            for (var k=0; k < lines.length; k++) {
+                rel = null;
+                var arg = lines[k].split(';');
+                for (var i = 1; i < arg.length; i++) {
+                    lr = arg[i].split('=');
+                    if (lr[0] == 'rel') rel = lr[1].replace(/"/g, '').replace(/'/g, ''); // '"remove quotes
+                }
+                var v = arg[0];
+                // eg. Link: <.meta>; rel=meta, <.acl>; rel=acl
+                if (v.length && v[0] == '<' && v[v.length-1] == '>' && v.slice)
+                    v = v.slice(1, -1);
+                if (rel) { // Treat just like HTML link element
+                    this.linkData(xhr, rel, v, thisReq);
+                }
             }
         }
     };
+
+
 
     this.doneFetch = function(xhr, args) {
         this.addStatus(xhr.req, 'Done.')
@@ -8138,25 +8191,32 @@ $rdf.Fetcher = function(store, timeout, async) {
 
 
 
-// Looks up something.
-//
-// Looks up all the URIs a things has.
-// Parameters:
-//
-//  term:       canonical term for the thing whose URI is to be dereferenced
-//  rterm:      the resource which refered to this (for tracking bad links)
-//  force:      Load the data even if loaded before
-//  oneDone:   is called as callback(ok, errorbody, xhr) for each one
-//  allDone:   is called as callback(ok, errorbody) for all of them
-// Returns      the number of things looked up
-//
-
-
-    this.lookUpThing = function(term, rterm, force, oneDone, allDone) {
+    // Looks up something.
+    //
+    // Looks up all the URIs a things has.
+    //
+    // Parameters:
+    //
+    //  term:       canonical term for the thing whose URI is to be dereferenced
+    //  rterm:      the resource which refered to this (for tracking bad links)
+    //  options:    (old: force paraemter) or dictionary of options:
+    //      force:      Load the data even if loaded before
+    //  oneDone:   is called as callback(ok, errorbody, xhr) for each one
+    //  allDone:   is called as callback(ok, errorbody) for all of them
+    // Returns      the number of URIs fetched
+    //
+    this.lookUpThing = function(term, rterm, options, oneDone, allDone) {
         var uris = kb.uris(term) // Get all URIs
         var success = true;
         var errors = '';
-        var outstanding = {};
+        var outstanding = {}, force;
+        if (options === false || options === true) { // Old signaure
+            force = options;
+            options = { force: force };
+        } else {
+            if (options === undefined) options = {};
+            force = !!options.force;
+        }
 
         if (typeof uris !== 'undefined') {
             for (var i = 0; i < uris.length; i++) {
@@ -8166,7 +8226,7 @@ $rdf.Fetcher = function(store, timeout, async) {
                 var sf = this;
 
                 var requestOne = function requestOne(u1){
-                    sf.requestURI($rdf.uri.docpart(u1), rterm, force, function(ok, body, xhr){
+                    sf.requestURI($rdf.uri.docpart(u1), rterm, options, function(ok, body, xhr){
                         if (ok) {
                             if (oneDone) oneDone(true, u1);
                         } else {
@@ -8186,18 +8246,19 @@ $rdf.Fetcher = function(store, timeout, async) {
     }
 
 
-/*  Ask for a doc to be loaded if necessary then call back
-**
-** Changed 2013-08-20:  Added (ok, body) params to callback
-**
-**/
+    /*  Ask for a doc to be loaded if necessary then call back
+    **
+    ** Changed 2013-08-20:  Added (ok, body) params to callback
+    **
+    **/
     this.nowOrWhenFetched = function(uri, referringTerm, userCallback) {
+        uri = uri.uri || uri; // allow symbol object or string to be passed
         var sta = this.getState(uri);
         if (sta == 'fetched') return userCallback(true);
 
         // If it is 'failed', then shoulkd we try again?  I think so so an old error doens't get stuck
         //if (sta == 'unrequested')
-        this.requestURI(uri, referringTerm, false, userCallback);
+        this.requestURI(uri, referringTerm, {}, userCallback);
     }
 
 
@@ -8241,23 +8302,33 @@ $rdf.Fetcher = function(store, timeout, async) {
      
     this.saveRequestMetadata = function(xhr, kb, docuri) {
         var request = kb.bnode();
-        var ns = tabulator.ns;
         xhr.resource = $rdf.sym(docuri);
+
+        var ns = {};
+        ns.link = $rdf.Namespace("http://www.w3.org/2007/ont/link#");
+        ns.rdfs = $rdf.Namespace("http://www.w3.org/2000/01/rdf-schema#");
+
         xhr.req = request;
         var now = new Date();
         var timeNow = "[" + now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds() + "] ";
-        kb.add(request, ns.rdfs("label"), kb.literal(timeNow + ' Request for ' + docuri), this.appNode)
-        kb.add(request, ns.link("requestedURI"), kb.literal(docuri), this.appNode)
+        kb.add(request, ns.rdfs("label"), kb.literal(timeNow + ' Request for ' + docuri), this.appNode);
+        kb.add(request, ns.link("requestedURI"), kb.literal(docuri), this.appNode);
+
         kb.add(request, ns.link('status'), kb.collection(), this.appNode);
         return request;
     };
        
     this.saveResponseMetadata = function(xhr, kb) {
         var response = kb.bnode();
-        var ns = tabulator.ns;
+        var ns = {};
+        ns.link = $rdf.Namespace("http://www.w3.org/2007/ont/link#");
+        ns.http = $rdf.Namespace("http://www.w3.org/2007/ont/http#");
+        ns.httph = $rdf.Namespace("http://www.w3.org/2007/ont/httph#");
+        ns.rdfs = $rdf.Namespace("http://www.w3.org/2000/01/rdf-schema#");
+
         kb.add(xhr.req, ns.link('response'), response);
-        kb.add(response, ns.http('status'), kb.literal(xhr.status), response)
-        kb.add(response, ns.http('statusText'), kb.literal(xhr.statusText), response)
+        kb.add(response, ns.http('status'), kb.literal(xhr.status), response);
+        kb.add(response, ns.http('statusText'), kb.literal(xhr.statusText), response);
 
         xhr.headers = {}
         if ($rdf.uri.protocol(xhr.resource.uri) == 'http' || $rdf.uri.protocol(xhr.resource.uri) == 'https') {
@@ -8270,28 +8341,29 @@ $rdf.Fetcher = function(store, timeout, async) {
     };
     
 
-    
-    
-
     /** Requests a document URI and arranges to load the document.
      ** Parameters:
      **	    term:  term for the thing whose URI is to be dereferenced
      **      rterm:  the resource which refered to this (for tracking bad links)
-     **      force:  Load the data even if loaded before
+     **      options:
+     **              force:  Load the data even if loaded before
+     **              withCredentials:   flag for XHR/CORS etc 
      **      userCallback:  Called with (true) or (false, errorbody) after load is done or failed
      ** Return value:
      **	    The xhr object for the HTTP access
      **      null if the protocol is not a look-up protocol,
      **              or URI has already been loaded
      */
-    this.requestURI = function(docuri, rterm, force, userCallback) { //sources_request_new
+    this.requestURI = function(docuri, rterm, options, userCallback) { //sources_request_new
+        docuri = docuri.uri || docuri; // Symbol or string
         if (docuri.indexOf('#') >= 0) { // hash
             throw ("requestURI should not be called with fragid: " + docuri);
         }
 
         var pcol = $rdf.uri.protocol(docuri);
         if (pcol == 'tel' || pcol == 'mailto' || pcol == 'urn') return null; // No look-up operation on these, but they are not errors
-        var force = !! force
+        if (options === undefined) options = {};
+        var force = !! options.force
         var kb = this.store
         var args = arguments
         var docterm = kb.sym(docuri)
@@ -8324,7 +8396,7 @@ $rdf.Fetcher = function(store, timeout, async) {
             xhr.resource = docterm;
             xhr.requestedURI = args[0];
         } else {
-            var req = kb.bnode(); // @@ Joe, no need for xhr.req?
+            var req = kb.bnode(); 
         }
         var requestHandlers = kb.collection();
         var sf = this;
@@ -8359,23 +8431,6 @@ $rdf.Fetcher = function(store, timeout, async) {
                     var oldreq = xhr.req;
                     kb.add(oldreq, ns.http('redirectedTo'), kb.sym(newURI), oldreq);
 
-
-                    ////////////// Change the request node to a new one:  @@@@@@@@@@@@ Duplicate of what will be done by requestURI below
-                    /* var newreq = xhr.req = kb.bnode() // Make NEW reqest for everything else
-                    kb.add(oldreq, ns.http('redirectedRequest'), newreq, xhr.req);
-
-                    var now = new Date();
-                    var timeNow = "[" + now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds() + "] ";
-                    kb.add(newreq, ns.rdfs("label"), kb.literal(timeNow + ' Request for ' + newURI), this.appNode)
-                    kb.add(newreq, ns.link('status'), kb.collection(), this.appNode);
-                    kb.add(newreq, ns.link("requestedURI"), kb.literal(newURI), this.appNode);
-
-                    var response = kb.bnode();
-                    kb.add(oldreq, ns.link('response'), response);
-                    */
-                    // kb.add(response, ns.http('status'), kb.literal(xhr.status), response);
-                    // if (xhr.statusText) kb.add(response, ns.http('statusText'), kb.literal(xhr.statusText), response)
-
                     xhr.abort()
                     xhr.aborted = true
 
@@ -8384,7 +8439,7 @@ $rdf.Fetcher = function(store, timeout, async) {
                     //sf.fireCallbacks('done', args) // Are these args right? @@@   Noit done yet! done means success
                     sf.requested[xhr.resource.uri] = 'redirected';
 
-                    var xhr2 = sf.requestURI(newURI, xhr.resource, force, userCallback);
+                    var xhr2 = sf.requestURI(newURI, xhr.resource, options, userCallback);
                     xhr2.proxyUsed = true; //only try the proxy once
 
                     if (xhr2 && xhr2.req) {
@@ -8397,10 +8452,17 @@ $rdf.Fetcher = function(store, timeout, async) {
                 }
             } else {
                 if (xhr.withCredentials) {
+                    console.log("@@ Retrying with no credentials for " + xhr.resource)
                     xhr.abort();
-                    xhr.withCredentials = false;
-                    sf.addStatus(xhr.req, "Credentials SUPPRESSED to see if that helps");
-                    xhr.send(); // try again
+                    delete sf.requested[docuri]; // forget the original request happened
+                    newopt = {};
+                    for (opt in options) if (options.hasOwnProperty(opt)) {
+                        newopt[opt] = options[opt]
+                    }
+                    newopt.withCredentials = false;
+                    sf.addStatus(xhr.req, "Abort: Will retry with credentials SUPPRESSED to see if that helps");
+                     sf.requestURI(docuri, rterm, newopt, userCallback)
+                    // xhr.send(); // try again -- not a function
                 } else {
                     sf.failFetch(xhr, "XHR Error: "+event); // Alas we get no error message
                 }
@@ -8416,8 +8478,7 @@ $rdf.Fetcher = function(store, timeout, async) {
                 var thisReq = xhr.req // Might have changes by redirect
                 sf.fireCallbacks('recv', args)
                 var kb = sf.store;
-                sf.saveResponseMetadata(xhr, kb);
-
+                var response = sf.saveResponseMetadata(xhr, kb);
                 sf.fireCallbacks('headers', [{uri: docuri, headers: xhr.headers}]);
 
                 if (xhr.status >= 400) { // For extra dignostics, keep the reply
@@ -8500,25 +8561,7 @@ $rdf.Fetcher = function(store, timeout, async) {
                     }
                 }
 
-                var link;
-                try {
-                    link = xhr.getResponseHeader('link');
-                }catch(e){}
-                if (link) {
-                    var rel = null;
-                    var arg = link.replace(/ /g, '').split(';');
-                    for (var i = 1; i < arg.length; i++) {
-                        lr = arg[i].split('=');
-                        if (lr[0] == 'rel') rel = lr[1];
-                    }
-                    var v = arg[0];
-                    // eg. Link: <.meta>, rel=meta
-                    if (v.length && v[0] == '<' && v[v.length-1] == '>' && v.slice)
-                        v = v.slice(1, -1);
-                    if (rel) // Treat just like HTML link element
-                        sf.linkData(xhr, rel, v);
-                }
-
+                sf.parseLinkHeader(xhr, thisReq); // sf.?
 
                 if (handler) {
                     try {
@@ -8644,24 +8687,27 @@ $rdf.Fetcher = function(store, timeout, async) {
 
         // @ Many ontology files under http: and need CORS wildcard -> can't have withCredentials
         var withCredentials = ( uri2.slice(0,6) === 'https:'); // @@ Kludge -- need for webid which typically is served from https
-
+        if (options.withCredentials !== undefined) {
+            withCredentials = options.withCredentials;
+        }
         var actualProxyURI = this.proxyIfNecessary(uri2);
         // Setup the request
         if (typeof jQuery !== 'undefined' && jQuery.ajax) {
+            var xhrFields = { withCredentials: withCredentials};
             var xhr = jQuery.ajax({
                 url: actualProxyURI,
                 accepts: {'*': 'text/turtle,text/n3,application/rdf+xml'},
                 processData: false,
-                xhrFields: {
-                    withCredentials: withCredentials
-                },
+                xhrFields: xhrFields,
                 timeout: sf.timeout,
+                headers: force ? { 'cache-control': 'no-cache'} : {},
                 error: function(xhr, s, e) {
 
                     xhr.req = req;   // Add these in case fails before .ajax returns
                     xhr.userCallback = userCallback;
                     xhr.resource = docterm;
                     xhr.requestedURI = uri2;
+                    xhr.withCredentials = withCredentials; // Somehow gets lost by jq
 
 
                     if (s == 'timeout')
@@ -8694,6 +8740,9 @@ $rdf.Fetcher = function(store, timeout, async) {
             xhr.timeout = sf.timeout;
             xhr.withCredentials = withCredentials;
             xhr.actualProxyURI = actualProxyURI;
+            if (force) {
+                xhr.setRequestHeader('Cache-control', 'no-cache');
+            }
 
             xhr.req = req;
             xhr.userCallback = userCallback;
@@ -8738,7 +8787,7 @@ $rdf.Fetcher = function(store, timeout, async) {
                                     // var requestHandlers = kb.collection()
 
                                     // kb.add(kb.sym(newURI), ns.link("request"), req, this.appNode)
-                                    kb.add(oldreq, ns.http('redirectedRequest'), newreq, xhr.req);
+                                    kb.add(oldreq, ns.http('redirectedRequest'), newreq, this.appNode);
 
                                     var now = new Date();
                                     var timeNow = "[" + now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds() + "] ";
@@ -8934,10 +8983,10 @@ $rdf.Fetcher = function(store, timeout, async) {
         delete this.requested[term.uri]; // So it can be loaded again
     }
 
-    this.refresh = function(term) { // sources_refresh
+    this.refresh = function(term, userCallback) { // sources_refresh
         this.unload(term);
         this.fireCallbacks('refresh', arguments)
-        this.requestURI(term.uri, undefined, true)
+        this.requestURI(term.uri, undefined, { force: true}, userCallback)
     }
 
     this.retract = function(term) { // sources_retract
@@ -9029,7 +9078,7 @@ $rdf.parse = function parse(str, kb, base, contentType) {
 
 //   Serialize to the appropriate format
 //
-$rdf.serialize = function(target, kb, base, contentType) {
+$rdf.serialize = function(target, kb, base, contentType, callback) {
     var documentString;
     var sz = $rdf.Serializer(kb);
     var newSts = kb.statementsMatching(undefined, undefined, undefined, target);
@@ -9047,12 +9096,12 @@ $rdf.serialize = function(target, kb, base, contentType) {
             break;
         case 'application/json+ld':
             var n3String = sz.statementsToN3(newSts);
-            documentString = convertToJson(n3String);
+            convertToJson(n3String, callback);
             break;
         case 'application/n-quads':
         case 'application/nquads': // @@@ just outpout the quads? Does not work for collections
             var n3String = sz.statementsToN3(newSts);
-            documentString = convertToNQuads(n3String); 
+            documentString = convertToNQuads(n3String, callback);
             break;
         default:
             throw "serialise: Content-type "+content_type +" not supported for data write";
@@ -9061,63 +9110,74 @@ $rdf.serialize = function(target, kb, base, contentType) {
 };
 
 ////////////////// JSON-LD code currently requires Node
+if (typeof module !== 'undefined' && module.require) { // Node
+    var asyncLib = require('async');
+    var jsonld = require('jsonld');
+    var N3 = require('n3');
 
-if (typeof module !== 'undefined' && module.require) { // Node 
-
-    var convertToJson = function(n3String) {
+    var convertToJson = function(n3String, jsonCallback) {
         var jsonString = undefined;
         var n3Parser = N3.Parser();
-        var n3Writer = N3.Parser({format: 'N-Quads'});
+        var n3Writer = N3.Writer({
+            format: 'N-Quads'
+        });
         asyncLib.waterfall([
-            function(parseCallback) {
-                n3Parser.parse(n3String, prefixCallback);
+            function(callback) {
+                n3Parser.parse(n3String, callback);
             },
-            function(err, triple, prefix, writeCallback) {
-                if (!err) {
+            function(triple, prefix, callback) {
+                if (triple !== null) {
                     n3Writer.addTriple(triple);
-                    if (typeof writeCallback === 'function') {
-                        writer.end(writeCallback);
-                    }
+                }
+                if (typeof callback === 'function') {
+                    n3Writer.end(callback);
                 }
             },
-            function(err, result) {
-                if (!err) {
-                    $rdf.jsonld.fromRDF(result, {format: 'application/nquads'}, stringCallback);
+            function(result, callback) {
+                try {
+                    jsonld.fromRDF(result, {
+                        format: 'application/nquads'
+                    }, callback);
+                } catch (err) {
+                    callback(err);
                 }
             },
-            function(err, json) {
-                if (!error) {
-                    jsonString = JSON.stringify(json);
-                }
+            function(json, callback) {
+                jsonString = JSON.stringify(json);
+                jsonCallback(null, jsonString);
             }
-        ]);
-        return jsonString;
+        ], function(err, result) {
+            jsonCallback(err, jsonString);
+        });
     }
 
-    var convertToNQuads = function(n3String) {
+    var convertToNQuads = function(n3String, nquadCallback) {
         var nquadString = undefined;
         var n3Parser = N3.Parser();
-        var n3Writer = N3.Parser({format: 'N-Quads'});
+        var n3Writer = N3.Writer({
+            format: 'N-Quads'
+        });
         asyncLib.waterfall([
-            function(parseCallback) {
-                n3Parser.parse(n3String, tripleCallback);
+            function(callback) {
+                n3Parser.parse(n3String, callback);
             },
-            function(err, triple, prefix, writeCallback) {
-                if (!err) {
+            function(triple, prefix, callback) {
+                if (triple !== null) {
                     n3Writer.addTriple(triple);
-                    if (typeof writeCallback === 'function') {
-                        writer.end(writeCallback);
-                    }
+                }
+                if (typeof callback === 'function') {
+                    n3Writer.end(callback);
                 }
             },
-            function(err, result) {
-                if (!err) {
-                    nquadString = result;
-                }
+            function(result, callback) {
+                nquadString = result;
+                nquadCallback(null, nquadString);
             },
-        ]);
-        return nquadString;
-    } // endif Node 
+        ], function(err, result) {
+            nquadCallback(err, nquadString);
+        });
+    }
+
 }
 // ends
 
@@ -9277,6 +9337,7 @@ tabulator.Icon.termWidgets.addTri = new tabulator.Icon.OutlinerIcon(tabulator.Ic
 tabulator.ns = {};
 
 
+tabulator.ns.auth = $rdf.Namespace('http://www.w3.org/ns/auth/acl#');
 tabulator.ns.arg = $rdf.Namespace('http://www.w3.org/ns/pim/arg#');
 tabulator.ns.cal = $rdf.Namespace('http://www.w3.org/2002/12/cal/ical#');
 tabulator.ns.contact = $rdf.Namespace('http://www.w3.org/2000/10/swap/pim/contact#');
@@ -9651,6 +9712,11 @@ tabulator.panes.fieldParams[tabulator.ns.ui('DateTimeField').uri] = {
 tabulator.panes.fieldParams[tabulator.ns.ui('DateTimeField').uri].pattern = 
     /^\s*[0-9][0-9][0-9][0-9](-[0-1]?[0-9]-[0-3]?[0-9])?(T[0-2][0-9]:[0-5][0-9](:[0-5][0-9])?)?Z?\s*$/;
 
+tabulator.panes.fieldParams[tabulator.ns.ui('TimeField').uri] = {
+    'size': 10, 'type': 'time', 'dt': 'time'};
+tabulator.panes.fieldParams[tabulator.ns.ui('TimeField').uri].pattern = 
+    /^\s*([0-2]?[0-9]:[0-5][0-9](:[0-5][0-9])?)\s*$/;
+
 tabulator.panes.fieldParams[tabulator.ns.ui('IntegerField').uri] = {
     'size': 12, 'style': 'text-align: right', 'dt': 'integer' };
 tabulator.panes.fieldParams[tabulator.ns.ui('IntegerField').uri].pattern =
@@ -9684,6 +9750,7 @@ tabulator.panes.field[tabulator.ns.ui('EmailField').uri] =
 tabulator.panes.field[tabulator.ns.ui('ColorField').uri] = 
 tabulator.panes.field[tabulator.ns.ui('DateField').uri] = 
 tabulator.panes.field[tabulator.ns.ui('DateTimeField').uri] = 
+tabulator.panes.field[tabulator.ns.ui('TimeField').uri] = 
 tabulator.panes.field[tabulator.ns.ui('NumericField').uri] = 
 tabulator.panes.field[tabulator.ns.ui('IntegerField').uri] = 
 tabulator.panes.field[tabulator.ns.ui('DecimalField').uri] = 
@@ -11046,8 +11113,8 @@ tabulator.panes.utils.checkUser = function(doc, setIt) {
                 if (request !== undefined) {
                     kb.each(response, tabulator.ns.httph('user')).map(function(userHeader){
                         var username = userHeader.value.trim();
-                        if (userHeader.slice(0,4) !== 'dns:') { // dns: are pseudo-usernames from rww.io and don't count
-                            setIt(userHeader.value.trim());
+                        if (username.slice(0,4) !== 'dns:') { // dns: are pseudo-usernames from rww.io and don't count
+                            setIt(username);
                             done = true;
                         }
                     });
@@ -22981,7 +23048,7 @@ onDragStart: function(x,y,td){
     //ToDo for myself: understand the connections in firefox, x, screenX
     
     this.dragTarget=td;
-    const kDSIID = Components.interfaces.nsIDragService;
+    var kDSIID = Components.interfaces.nsIDragService;
     var dragAction = { action: kDSIID.DRAGDROP_ACTION_COPY + kDSIID.DRAGDROP_ACTION_MOVE + kDSIID.DRAGDROP_ACTION_LINK };    
 
     //alert(td.ownerDocument.getBoxObjectFor(td));
@@ -23042,11 +23109,11 @@ URItoTransferDataSet: function(uri){
     return dataSet;
 },
 _mDS: null, 
-get mDragService() //some syntax I don't understand
+get_mDragService:  function() //some syntax I don't understand -- was get mDragService() 
 {
     if (!this._mDS) {
-        const kDSContractID = "@mozilla.org/widget/dragservice;1";
-        const kDSIID = Components.interfaces.nsIDragService;
+        var kDSContractID = "@mozilla.org/widget/dragservice;1";
+        var kDSIID = Components.interfaces.nsIDragService;
         this._mDS = Components.classes[kDSContractID].getService(kDSIID);
     }
     return this._mDS;
@@ -26725,8 +26792,8 @@ tabulator.OutlineObject = function(doc) {
 
         if (tabulator.isExtension) newURI = function(spec) {
             // e.g. see http://www.nexgenmedia.net/docs/protocol/
-            const kSIMPLEURI_CONTRACTID = "@mozilla.org/network/simple-uri;1";
-            const nsIURI = Components.interfaces.nsIURI;
+            var kSIMPLEURI_CONTRACTID = "@mozilla.org/network/simple-uri;1";
+            var nsIURI = Components.interfaces.nsIURI;
             var uri = Components.classes[kSIMPLEURI_CONTRACTID].createInstance(nsIURI);
             uri.spec = spec;
             return uri;
@@ -29794,7 +29861,8 @@ tabulator.registerViewType(TimelineViewFactory);
     tabulator.outline.init();
 };
 
-jQuery(function() {
+document.addEventListener('DOMContentLoaded', function() {
+// jQuery(function() {
     if (tabulator.rdf == undefined)
         tabulator.setup();
 });

@@ -1,6 +1,10 @@
 // Scheduler app 
-            
-jQuery(document).ready(function() {
+//
+// This is or was part of https://github.com/Linkeddata/app-schedule
+//
+
+document.addEventListener('DOMContentLoaded', function() {
+// jQuery(document).ready(function() {
 
 
     var appPathSegment = 'app-when-can-we.w3.org'; // how to allocate this string and connect to 
@@ -90,7 +94,57 @@ jQuery(document).ready(function() {
         });
     };
     
-          
+    
+    //////////////////////// Accesss control
+
+
+    // Two variations of ACL for this app, public read and public read/write
+    // In all cases owner has read write control
+    
+    var genACLtext = function(docURI, aclURI, allWrite) {
+        var g = $rdf.graph(), auth = $rdf.Namespace('http://www.w3.org/ns/auth/acl#');
+        var a = g.sym(aclURI + '#a1'), acl = g.sym(aclURI), doc = g.sym(docURI);
+        g.add(a, tabulator.ns.rdf('type'), auth('Authorization'), acl);
+        g.add(a, auth('accessTo'), doc, acl)
+        g.add(a, auth('agent'), me, acl);
+        g.add(a, auth('mode'), auth('Read'), acl);
+        g.add(a, auth('mode'), auth('Write'), acl);
+        g.add(a, auth('mode'), auth('Control'), acl);
+        
+        a = g.sym(aclURI + '#a2');
+        g.add(a, tabulator.ns.rdf('type'), auth('Authorization'), acl);
+        g.add(a, auth('accessTo'), doc, acl)
+        g.add(a, auth('agentClass'), ns.foaf('Agent'), acl);
+        g.add(a, auth('mode'), auth('Read'), acl);
+        if (allWrite) {
+            g.add(a, auth('mode'), auth('Write'), acl);
+        }
+        return $rdf.serialize(acl, g, aclURI, 'text/turtle');
+    }
+    
+    var setACL = function(docURI, allWrite, callback) {
+        var aclDoc = kb.any(kb.sym(docURI),
+            kb.sym('http://www.iana.org/assignments/link-relations/acl')); // @@ check that this get set by web.js
+        if (aclDoc) { // Great we already know where it is
+            var aclText = genACLtext(docURI, aclDoc.uri, allWrite);
+            webOperation('PUT', aclDoc.uri, { data: aclText, contentType: 'text/turtle'}, callback);        
+        } else {
+        
+            fetcher.nowOrWhenFetched(docURI, undefined, function(ok, body){
+                if (!ok) return callback(ok, "Gettting headers for ACL: " + body);
+                var aclDoc = kb.any(kb.sym(docURI),
+                    kb.sym('http://www.iana.org/assignments/link-relations/acl')); // @@ check that this get set by web.js
+                if (!aclDoc) {
+                    // complainIfBad(false, "No Link rel=ACL header for " + docURI);
+                    callback(false, "No Link rel=ACL header for " + docURI);
+                } else {
+                    var aclText = genACLtext(docURI, aclDoc.uri, allWrite);
+                    webOperation('PUT', aclDoc.uri, { data: aclText, contentType: 'text/turtle'}, callback);
+                }
+            })
+        }
+    };
+              
 
     ////////////////////////////////////// Getting logged in with a WebId
     
@@ -206,19 +260,51 @@ jQuery(document).ready(function() {
             var item = toBeCopied[f];
             var fun = function copyItem(item) {
                 agenda.push(function(){
-                    console.log("Copying " + base + item.local + " to " +  newBase + item.local);
+                    var newURI = newBase + item.local;
+                    console.log("Copying " + base + item.local + " to " +  newURI);
                     webCopy(base + item.local, newBase + item.local, item.contentType, function(uri, ok, message, xhr) {
                         if (!ok) {
                             complainIfBad(ok, "FAILED to copy "+ base + item.local +' : ' + message);
                             console.log("FAILED to copy "+ base + item.local +' : ' + message);
                         } else {
-                            agenda.shift()(); // beware too much nesting
+                            xhr.resource = kb.sym(newURI);
+                            kb.fetcher.parseLinkHeader(xhr, kb.bnode()); // Dont save the whole headers, just the links
+                            setACL(newURI, false, function(ok, message){
+                                if (!ok) {
+                                    complainIfBad(ok, "FAILED to set ACL "+ newURI +' : ' + message);
+                                    console.log("FAILED to set ACL "+ newURI +' : ' + message);
+                                } else {
+                                    agenda.shift()(); // beware too much nesting
+                                }
+                            })
                         }
                     });
                 });
             };
             fun(item);
         };
+        
+            
+        agenda.push(function() {
+            webOperation('PUT', newResultsDoc.uri, { data: "", contentType: 'text/turtle'}, function(ok, body) {
+                complainIfBad(ok, "Failed to initialize empty results file: " + body);
+                if (ok) agenda.shift()();
+            })
+        });
+
+        agenda.push(function() {
+            setACL(newResultsDoc.uri, true, function(ok, body) {
+                complainIfBad(ok, "Failed to set Read-Write ACL on results file: " + body);
+                if (ok) agenda.shift()();
+            })
+        });
+
+        agenda.push(function() {
+            setACL(newDetailsDoc.uri, false, function(ok, body) {
+                complainIfBad(ok, "Failed to set read ACL on configuration file: " + body);
+                if (ok) agenda.shift()();
+            })
+        });
 
         agenda.push(function(){  // give the user links to the new app
         
@@ -378,7 +464,6 @@ jQuery(document).ready(function() {
                     b2.setAttribute('disabled', '');
                     if (!gotDoneButton) { // Only expose at last slide seen
                         naviCenter.appendChild(doneButton); // could also check data shape
-                        naviCenter.appendChild(emailButton); 
                         gotDoneButton = true;
                     }
                 } else {
@@ -432,10 +517,12 @@ jQuery(document).ready(function() {
             if (kb.any(subject, SCHED('ready'))) { // already done
                 getResults();
             } else {
+                naviRight.appendChild(emailButton); 
                 tabulator.sparql.update([], insertables, function(uri,success,error_body){
                     if (!success) {
                         complainIfBad(success, error_body);
                     } else {
+                        naviRight.appendChild(emailButton);
                         getResults();
                     }
                 });
@@ -447,21 +534,164 @@ jQuery(document).ready(function() {
         emailIcon.setAttribute('src', scriptBase + 'envelope-icon.png')
         emailButton.textContent = "email";
         emailButton.addEventListener('click', function(e) {
-            var mailto = 'mailto:'
-            var invitees = kb.each(subject, SCHED('invitee')).map(function(who){
-                var mbox = kb.any(who, FOAF('mbox'));
-                return mbox ? '' + mbox : '';
-            }).join(',');
-            mailto += invitees;
             var title = '' + (kb.any(subject, DC('title')) || '');
-            mailto += '?subject=' + encodeURIComponent( title + "-- When can we meet?" )
-            mailto += '&body=' + encodeURIComponent( title + "\n\nWhen can you?\n\nSee " + base + 'index.html\n' )
+            var mailto = 'mailto:' +
+                kb.each(subject, SCHED('invitee')).map(function(who){
+                    var mbox = kb.any(who, FOAF('mbox'));
+                    return mbox ? '' + mbox : '';
+                }).join(',')  +
+              '?subject=' + encodeURIComponent( title + "-- When can we meet?" ) +
+              '&body=' + encodeURIComponent( title + "\n\nWhen can you?\n\nSee " + base + 'index.html\n' );
             
             console.log('Mail: ' + mailto);
             window.location.href = mailto;
         }, false);
     } // showForms
     
+    // Ask for each day, what times
+
+    var setTimesOfDay = function() {
+        var i, j, x, y, slot, cell, day, insertables = [];
+        var possibleDays = kb.each(invitation, SCHED('option'))
+            .map(function(opt){return kb.any(opt, ICAL('dtstart'))});
+        var cellLookup = [];
+        var slots = kb.each(invitation, SCHED('slot'));
+        if (slots.length === 0) {
+            for (i = 0; i<2; i++) {
+                slot = tabulator.panes.utils.newThing(detailsDoc);
+                insertables.push($rdf.st(invitation,SCHED('slot'), slot ));
+                insertables.push($rdf.st(slott,RDFS('label'), 'slot ' + ( i + 1 ) ));
+                for (j=0; j < possibleDays.length; j++) {
+                    day - possibleDays[j];
+                    x = kb.any(slot, RDFS('label'));
+                    y = kb.any(day, ICAL('dtstart'));
+                    cell = tabulator.panes.utils.newThing(detailsDoc);
+                    cellLookup[x.toNT() + y.toNT()] = cell;
+                    insertables.push($rdf.st(slot,SCHED('cell'), cell ));
+                    insertables.push($rdf.st(cell,SCHED('day'), possibleDays[j]));
+                }
+            }
+        }
+        
+
+        var query = new $rdf.Query('TimesOfDay');
+        var v = {};
+        ['day', 'label', 'value', 'slot', 'cell'].map(function(x){
+             query.vars.push(v[x]=$rdf.variable(x))});
+        query.pat.add(invitation, SCHED('slot'), v.slot);
+        query.pat.add(v.slot, RDFS('label'), v.label);
+        query.pat.add(v.slot, SCHED('cell'), v.cell);
+        query.pat.add(v.cell, SCHED('timeOfDay'), v.value);
+        query.pat.add(v.cell, SCHED('day'), v.day);
+        
+        var options = {};
+        options.set_x = kb.each(subject, SCHED('slot')); // @@@@@ option -> dtstart in future
+        options.set_x = options.set_x.map(function(opt){return kb.any(opt, RDFS('label'))});
+
+        options.set_y = kb.each(subject, SCHED('option')); // @@@@@ option -> dtstart in future
+        options.set_y = options.set_y.map(function(opt){return kb.any(opt, ICAL('dtstart'))});
+
+        var possibleTimes = kb.each(invitation, SCHED('option'))
+            .map(function(opt){return kb.any(opt, ICAL('dtstart'))});
+
+        var displayTheMatrix = function() {
+            var matrix = div.appendChild(tabulator.panes.utils.matrixForQuery(
+                dom, query, v.time, v.author, v.value, options, function(){})); 
+            
+            matrix.setAttribute('class', 'matrix');
+            
+            var refreshButton = dom.createElement('button');
+            refreshButton.textContent = "refresh";
+            refreshButton.addEventListener('click', function(e) {
+                refreshButton.disabled = true;
+                tabulator.sf.nowOrWhenFetched(subject_uri.split('#')[0], undefined, function(ok, body){
+                    if (!ok) {
+                        console.log("Cant refresh matrix" + body);
+                    } else {
+                        matrix.refresh();
+                        refreshButton.disabled = false;
+                    };
+                });
+            }, false);
+            
+            clearElement(naviCenter);
+            naviCenter.appendChild(refreshButton);
+        };
+
+        
+        var dataPointForNT = [];
+        
+        var doc = resultsDoc;
+        options.set_y = options.set_y.filter(function(z){ return (! z.sameTerm(me))});
+        options.set_y.push(me); // Put me on the end
+
+        options.cellFunction = function(cell, x, y, value) {
+            var point =  cellLookup[x.toNT() + y.toNT()];
+            
+            if (y.sameTerm(me)) {
+                var callback = function() { refreshColor(); }; //  @@ may need that
+                var selectOptions = {};
+                var predicate = SCHED('timeOfDay');
+                var cellSubject = dataPointForNT[x.toNT()];
+                var selector = tabulator.panes.utils.makeSelectForOptions(dom, kb, cellSubject, predicate,
+                        possibleAvailabilities, selectOptions, resultsDoc, callback);
+                cell.appendChild(selector);
+            } else if (value !== null) {
+                
+                cell.textContent = tabulator.Util.label(value);
+            }
+        
+        };
+
+        var responses = kb.each(invitation, SCHED('response'));
+        var myResponse = null;
+        responses.map(function(r){
+            if (kb.holds(r, DC('author'), me)) {
+                myResponse = r;
+            }
+        });
+
+        var insertables = [];  // list of statements to be stored
+        
+        var id = tabulator.panes.utils.newThing(doc).uri
+        if (myResponse === null) {
+            myResponse = $rdf.sym(id + '_response' );
+            insertables.push($rdf.st(invitation, SCHED('response'), myResponse, doc));
+            insertables.push($rdf.st(myResponse, DC('author'), me, doc));
+        } else {
+            var dps = kb.each(myResponse, SCHED('cell'));
+            dps.map(function(dataPoint){
+                var time = kb.any(dataPoint, ICAL('dtstart'));
+                dataPointForNT[time.toNT()] = dataPoint;
+            });
+        }
+        for (var j=0; j < possibleTimes.length; j++) {
+            if (dataPointForNT[possibleTimes[j].toNT()]) continue;
+            var dataPoint = $rdf.sym(id + '_' + j);
+            insertables.push($rdf.st(myResponse, SCHED('cell'), dataPoint, doc));
+            insertables.push($rdf.st(dataPoint, ICAL('dtstart'), possibleTimes[j], doc)); // @@
+            dataPointForNT[possibleTimes[j].toNT()] = dataPoint;
+        }
+        if (insertables.length) {
+            tabulator.sparql.update([], insertables, function(uri,success,error_body){
+                if (!success) {
+                    complainIfBad(success, error_body);
+                } else {
+                    displayTheMatrix();
+                }
+            });
+            
+        } else { // no insertables
+            displayTheMatrix();
+        };
+        
+    
+    
+        
+        
+        
+    
+    }
     
  
     // Read or create empty results file
