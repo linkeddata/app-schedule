@@ -516,6 +516,7 @@ document.addEventListener('DOMContentLoaded', function() {
         doneButton.addEventListener('click', function(e) {
             if (kb.any(subject, SCHED('ready'))) { // already done
                 getResults();
+                naviRight.appendChild(emailButton); 
             } else {
                 naviRight.appendChild(emailButton); 
                 tabulator.sparql.update([], insertables, function(uri,success,error_body){
