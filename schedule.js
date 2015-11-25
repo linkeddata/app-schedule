@@ -397,7 +397,7 @@ document.addEventListener('DOMContentLoaded', function() {
         d.innerHTML = '<p style="font-size: 120%; background-color: #ffe; padding: 2em; margin: 1em; border-radius: 1em;">'+
         'You need to be logged in.<br />To be able to use this app'+
             ' you need to log in with webid account at a storage provider.</p> '+
-            '<iframe class="text-center" src="https://linkeddata.github.io/signup/?ref=' + origin + '" '+
+            '<iframe class="text-center" src="https://solid.github.io/solid-idps/?origin=' + origin + '" '+
             'style="margin-left: 1em; margin-right: 1em; width: 95%; height: 40em;" '+
             ' sandbox="allow-same-origin allow-scripts allow-forms" frameborder="0"></iframe>';
             listenToIframe();
