@@ -225,23 +225,67 @@ document.addEventListener('DOMContentLoaded', function() {
         ];
         
         newInstance = kb.sym(newDetailsDoc.uri + '#event');
-        kb.add(newInstance, ns.rdf('type'), SCHED('SchedulableEvent'), newDetailsDoc);
-        if (me) {
-            kb.add(newInstance, DC('author'), me, newDetailsDoc);
-        }
-        
-        kb.add(newInstance, DC('created'), new Date(), newDetailsDoc);
-        kb.add(newInstance, SCHED('resultsDocument'), newDetailsDoc);
-        
-        // Keep a paper trail   @@ Revisit when we have non-public ones @@ Privacy
-        kb.add(newInstance, tabulator.ns.space('inspiration'), thisInstance, detailsDoc);            
-        kb.add(newInstance, tabulator.ns.space('inspiration'), thisInstance, newDetailsDoc);
-        
         // $rdf.log.debug("\n Ready to put " + kb.statementsMatching(undefined, undefined, undefined, there)); //@@
 
 
         agenda = [];
+	
+        var f, fi, fn; //   @@ This needs some form of visible progress bar
+        for (f=0; f < toBeCopied.length; f++) {
+            var item = toBeCopied[f];
+            var fun = function copyItem(item) {
+                agenda.push(function(){
+                    var newURI = newBase + item.local;
+                    console.log("Copying " + base + item.local + " to " +  newURI);
+                    webCopy(base + item.local, newBase + item.local, item.contentType, function(uri, ok, message, xhr) {
+                        if (!ok) {
+                            complainIfBad(ok, "FAILED to copy "+ base + item.local +' : ' + message);
+                            console.log("FAILED to copy "+ base + item.local +' : ' + message);
+                        } else {
+                            xhr.resource = kb.sym(newURI);
+                            kb.fetcher.parseLinkHeader(xhr, kb.bnode()); // Dont save the whole headers, just the links
+			    
+			    var setThatACL = function() {
+				setACL(newURI, false, function(ok, message){
+				    if (!ok) {
+					complainIfBad(ok, "FAILED to set ACL "+ newURI +' : ' + message);
+					console.log("FAILED to set ACL "+ newURI +' : ' + message);
+				    } else {
+					agenda.shift()(); // beware too much nesting
+				    }
+				})
+			    }
+			    if (!me) {
+				console.log("Waiting to find out id user users to access " + xhr.resource)
+				tabulator.panes.utils.checkUser(xhr.resource, function(webid){
+				    me = kb.sym(webid);
+				    console.log("Got user id: "+ me);
+				    setThatACL();
+				});
+			    } else {
+				setThatACL();
+			    }
+                        }
+                    });
+                });
+            };
+            fun(item);
+        };
+        
         agenda.push(function createDetailsFile(){
+	    kb.add(newInstance, ns.rdf('type'), SCHED('SchedulableEvent'), newDetailsDoc);
+	    if (me) {
+		kb.add(newInstance, DC('author'), me, newDetailsDoc);
+	    }
+	    
+	    kb.add(newInstance, DC('created'), new Date(), newDetailsDoc);
+	    kb.add(newInstance, SCHED('resultsDocument'), newDetailsDoc);
+	    
+	    // Keep a paper trail   @@ Revisit when we have non-public ones @@ Privacy
+	    kb.add(newInstance, tabulator.ns.space('inspiration'), thisInstance, detailsDoc);            
+	    kb.add(newInstance, tabulator.ns.space('inspiration'), thisInstance, newDetailsDoc);
+        
+
             updater.put(
                 newDetailsDoc,
                 kb.statementsMatching(undefined, undefined, undefined, newDetailsDoc),
@@ -257,36 +301,7 @@ document.addEventListener('DOMContentLoaded', function() {
             );
         });
 
-        var f, fi, fn; //   @@ This needs some form of visible progress bar
-        for (f=0; f < toBeCopied.length; f++) {
-            var item = toBeCopied[f];
-            var fun = function copyItem(item) {
-                agenda.push(function(){
-                    var newURI = newBase + item.local;
-                    console.log("Copying " + base + item.local + " to " +  newURI);
-                    webCopy(base + item.local, newBase + item.local, item.contentType, function(uri, ok, message, xhr) {
-                        if (!ok) {
-                            complainIfBad(ok, "FAILED to copy "+ base + item.local +' : ' + message);
-                            console.log("FAILED to copy "+ base + item.local +' : ' + message);
-                        } else {
-                            xhr.resource = kb.sym(newURI);
-                            kb.fetcher.parseLinkHeader(xhr, kb.bnode()); // Dont save the whole headers, just the links
-                            setACL(newURI, false, function(ok, message){
-                                if (!ok) {
-                                    complainIfBad(ok, "FAILED to set ACL "+ newURI +' : ' + message);
-                                    console.log("FAILED to set ACL "+ newURI +' : ' + message);
-                                } else {
-                                    agenda.shift()(); // beware too much nesting
-                                }
-                            })
-                        }
-                    });
-                });
-            };
-            fun(item);
-        };
-        
-            
+			  
         agenda.push(function() {
             webOperation('PUT', newResultsDoc.uri, { data: "", contentType: 'text/turtle'}, function(ok, body) {
                 complainIfBad(ok, "Failed to initialize empty results file: " + body);
@@ -888,7 +903,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // pass me not defined
         }
         
-        
+        var instanceAuthor = kb.any(newInstance, DC('author'));
+	if (!instanceAuthor || instanceAuthor.sameTerm(me))
         var editButton = dom.createElement('button');
         editButton.textContent = "(Edit poll)";
         editButton.addEventListener('click', function(e) {
