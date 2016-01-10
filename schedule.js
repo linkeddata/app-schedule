@@ -465,6 +465,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (currentSlide === slides.length - 1 ) {
                     b2.setAttribute('disabled', '');
                     if (!gotDoneButton) { // Only expose at last slide seen
+                        naviCenter.appendChild(emailButton); // could also check data shape
                         naviCenter.appendChild(doneButton); // could also check data shape
                         gotDoneButton = true;
                     }
@@ -514,7 +515,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
         var doneButton = dom.createElement('button');
-        doneButton.textContent = "Done";
+        doneButton.textContent = "Go to poll";
         doneButton.addEventListener('click', function(e) {
             if (kb.any(subject, SCHED('ready'))) { // already done
                 getResults();
@@ -525,7 +526,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (!success) {
                         complainIfBad(success, error_body);
                     } else {
-                        naviRight.appendChild(emailButton);
+                        // naviRight.appendChild(emailButton);
                         getResults();
                     }
                 });
@@ -535,7 +536,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var emailButton = dom.createElement('button');
         var emailIcon = emailButton.appendChild(dom.createElement('img'));
         emailIcon.setAttribute('src', scriptBase + 'envelope-icon.png')
-        emailButton.textContent = "email";
+        emailButton.textContent = "email invitations";
         emailButton.addEventListener('click', function(e) {
             var title = '' + (kb.any(subject, DC('title')) || '');
             var mailto = 'mailto:' +
