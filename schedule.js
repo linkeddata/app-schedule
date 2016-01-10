@@ -192,7 +192,9 @@ document.addEventListener('DOMContentLoaded', function() {
         var newBase = kb.any(ws, ns.space('uriPrefix')).value;
         if (!newBase) {
             newBase = ws.uri.split('#')[0];
-        }
+        } else {
+	    newBase = newBase.value;
+	}
         if (newBase.slice(-1) !== '/') {
             $rdf.log.error(appPathSegment + ": No / at end of uriPrefix " + newBase ); // @@ paramater?
             newBase = newBase + '/';
