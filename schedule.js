@@ -906,15 +906,15 @@ document.addEventListener('DOMContentLoaded', function() {
         var instanceAuthor = kb.any(subject, DC('author'));
 	if (!instanceAuthor || instanceAuthor.sameTerm(me)) {
 	    var editButton = dom.createElement('button');
-	    editButton.textContent = "(Edit poll)";
+	    editButton.textContent = "(Modify the poll)";
 	    editButton.addEventListener('click', function(e) {
 		clearElement(div);
 		showForms();
 	    }, false);
+	    clearElement(naviLeft);
+	    naviLeft.appendChild(editButton);
 	}
-        clearElement(naviLeft);
-        naviLeft.appendChild(editButton);
-        
+			  
         // div.appendChild(editButton);
   
         
