@@ -903,7 +903,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // pass me not defined
         }
         
-        var instanceAuthor = kb.any(newInstance, DC('author'));
+        var instanceAuthor = kb.any(subject, DC('author'));
 	if (!instanceAuthor || instanceAuthor.sameTerm(me))
         var editButton = dom.createElement('button');
         editButton.textContent = "(Edit poll)";
