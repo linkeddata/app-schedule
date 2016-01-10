@@ -189,7 +189,7 @@ document.addEventListener('DOMContentLoaded', function() {
     /////////////////////////  Create new document files for new instance of app
 
     var initializeNewInstanceInWorkspace = function(ws) {
-        var newBase = kb.any(ws, ns.space('uriPrefix')).value;
+        var newBase = kb.any(ws, ns.space('uriPrefix'));
         if (!newBase) {
             newBase = ws.uri.split('#')[0];
         } else {
