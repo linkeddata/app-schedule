@@ -1,6 +1,11 @@
 app-schedule
 ============
 
+
+# THIS CODE HAS MOVED TO A PANE.
+
+# REFACTOR ME TO USE THE PANE.
+
 When can we meet?  Scheduling a meeting etc. Llinked Data Platform interactive social app
 
 Try it at https://linkeddata.github.io/app-schedule
